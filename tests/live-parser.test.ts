@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  combineDrawAndStage,
   parseLiveDayHtml,
   parseLiveMatchDetailHtml,
   warsawDateTimeToIso,
@@ -33,10 +34,11 @@ describe("live Flashscore parser", () => {
       playerBPhoto: null,
       playerARank: 12,
       playerBRank: 34,
+      voided: false,
     });
 
     const live = rows.find((row) => row.externalId === "flashscore:LIVEMAT1");
-    expect(live).toMatchObject({ tour: "WTA", status: "live", result: null, winner: null });
+    expect(live).toMatchObject({ tour: "WTA", status: "live", result: null, winner: null, voided: false });
 
     const upcoming = rows.find((row) => row.externalId === "flashscore:UPCOMING");
     expect(upcoming).toMatchObject({
@@ -59,6 +61,14 @@ describe("live Flashscore parser", () => {
       playerBPhoto: "https://static.flashscore.com/res/image/data/real-away.png",
       round: "Finał",
     });
+  });
+
+  it("keeps the draw type while adding the exact tournament stage", () => {
+    expect(combineDrawAndStage("Kwalifikacje", "Finał")).toBe("Kwalifikacje (Finał)");
+    expect(combineDrawAndStage("Turniej główny", "Ćwierćfinał")).toBe(
+      "Turniej główny (Ćwierćfinał)",
+    );
+    expect(combineDrawAndStage("Kwalifikacje", null)).toBe("Kwalifikacje");
   });
 
   it("preserves the Warsaw local hour in winter and summer", () => {

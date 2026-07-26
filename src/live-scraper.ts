@@ -1,7 +1,12 @@
 import { chromium, type BrowserContext, type Page } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
-import { parseLiveDayHtml, parseLiveMatchDetailHtml, parseRankingHtml } from "./live-parser.js";
+import {
+  combineDrawAndStage,
+  parseLiveDayHtml,
+  parseLiveMatchDetailHtml,
+  parseRankingHtml,
+} from "./live-parser.js";
 import type { LiveDaySnapshot, LiveMatch } from "./live-types.js";
 import { ROOT, isMain, writeJsonAtomic } from "./utils.js";
 
@@ -154,7 +159,7 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
       ...match,
       playerAPhoto: detail.playerAPhoto,
       playerBPhoto: detail.playerBPhoto,
-      round: detail.round ?? match.round,
+      round: combineDrawAndStage(match.round, detail.round),
     };
   } catch (error) {
     console.warn(
@@ -185,7 +190,7 @@ async function enrichDays(context: BrowserContext, days: LiveDaySnapshot[]): Pro
     (match) => match.playerAPhoto || match.playerBPhoto,
   ).length;
   const withSpecificRound = enriched.flatMap((day) => day.matches).filter(
-    (match) => !/^(Kwalifikacje|Turniej główny)$/i.test(match.round),
+    (match) => /\(.+\)$/.test(match.round),
   ).length;
   console.log(`Szczegóły meczów: zdjęcia ${withPhotos}/${queue.length}, dokładna runda ${withSpecificRound}/${queue.length}`);
   return enriched;

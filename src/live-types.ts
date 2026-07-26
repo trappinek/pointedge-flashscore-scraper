@@ -17,6 +17,7 @@ export interface LiveMatch {
   status: "upcoming" | "live" | "finished";
   result: string | null;
   winner: "A" | "B" | null;
+  voided: boolean;
 }
 
 export interface LiveDaySnapshot {

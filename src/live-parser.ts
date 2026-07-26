@@ -49,6 +49,14 @@ export interface LiveMatchDetail {
   round: string | null;
 }
 
+export function combineDrawAndStage(draw: string, stage: string | null): string {
+  const exactStage = stage?.trim();
+  if (!exactStage || exactStage.toLocaleLowerCase("pl-PL") === draw.toLocaleLowerCase("pl-PL")) {
+    return draw;
+  }
+  return `${draw} (${exactStage})`;
+}
+
 function normalizeName(value: string): string {
   return value
     .normalize("NFKD")
@@ -179,6 +187,10 @@ function scoreWinner(
   return null;
 }
 
+function isVoidedStatus(value: string): boolean {
+  return /walkower|po krecz|krecz|retired|odwołan|przełożon|anulowan/i.test(value);
+}
+
 export function parseLiveDayHtml(
   source: string,
   dateStr: string,
@@ -212,7 +224,6 @@ export function parseLiveDayHtml(
 
         if (!tour || element.attr("data-event-row") !== "true") return;
         const rowText = element.text().replace(/\s+/g, " ").trim();
-        if (/odwołan|przełożon|anulowan/i.test(rowText)) return;
 
         const id = element.attr("id")?.split("_").pop();
         const sourceUrl = element.find(".eventRowLink").attr("href");
@@ -224,8 +235,9 @@ export function parseLiveDayHtml(
         const stageLabel = element.find(".event__stage").text().replace(/\s+/g, " ").trim();
         const isLive = element.hasClass("event__match--live");
         const statusLabel = `${stageLabel} ${timeLabel}`;
-        const isFinished = /Koniec|walkower|po krecz|retired/i.test(statusLabel);
-        const status: LiveMatch["status"] = isLive ? "live" : isFinished ? "finished" : "upcoming";
+        const voided = isVoidedStatus(`${statusLabel} ${rowText}`);
+        const isFinished = /Koniec/i.test(statusLabel) || voided;
+        const status: LiveMatch["status"] = isFinished ? "finished" : isLive ? "live" : "upcoming";
         const scheduledTime = /^\d{2}:\d{2}$/.test(timeLabel) ? timeLabel : "12:00";
         const result = status === "finished" ? parseResult(element) : null;
         const details = embeddedDetails.get(id);
@@ -246,7 +258,8 @@ export function parseLiveDayHtml(
           startTime: details?.startTime ?? warsawDateTimeToIso(dateStr, scheduledTime),
           status,
           result,
-          winner: status === "finished" ? scoreWinner(element) : null,
+          winner: status === "finished" && !voided ? scoreWinner(element) : null,
+          voided,
         });
       });
   });

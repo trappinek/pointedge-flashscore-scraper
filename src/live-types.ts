@@ -4,10 +4,10 @@ export interface LiveMatch {
   externalId: string;
   playerA: string;
   playerAPhoto: string | null;
-  playerARank: null;
+  playerARank: number | null;
   playerB: string;
   playerBPhoto: string | null;
-  playerBRank: null;
+  playerBRank: number | null;
   tournament: string;
   tour: Tour;
   round: string;

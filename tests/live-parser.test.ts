@@ -7,7 +7,14 @@ const fixture = fs.readFileSync(path.join(process.cwd(), "tests", "fixtures", "l
 
 describe("live Flashscore parser", () => {
   it("keeps only ATP/WTA singles and maps finished, live and upcoming matches", () => {
-    const rows = parseLiveDayHtml(fixture, "2026-07-26");
+    const rows = parseLiveDayHtml(
+      fixture,
+      "2026-07-26",
+      new Map([
+        ["HOME123", 12],
+        ["AWAY456", 34],
+      ]),
+    );
     expect(rows).toHaveLength(3);
     expect(rows.map((row) => row.externalId)).not.toContain("flashscore:EXCLUDED");
 
@@ -20,6 +27,8 @@ describe("live Flashscore parser", () => {
       surface: "clay",
       playerAPhoto: "https://static.flashscore.com/res/image/data/home-player.png",
       playerBPhoto: "https://static.flashscore.com/res/image/data/away-player.png",
+      playerARank: 12,
+      playerBRank: 34,
     });
 
     const live = rows.find((row) => row.externalId === "flashscore:LIVEMAT1");

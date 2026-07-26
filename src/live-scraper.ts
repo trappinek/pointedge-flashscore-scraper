@@ -1,7 +1,7 @@
 import { chromium, type BrowserContext, type Page } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
-import { parseLiveDayHtml } from "./live-parser.js";
+import { parseLiveDayHtml, parseRankingHtml } from "./live-parser.js";
 import type { LiveDaySnapshot } from "./live-types.js";
 import { ROOT, isMain, writeJsonAtomic } from "./utils.js";
 
@@ -48,13 +48,54 @@ async function assertSelectedDate(page: Page, expected: string): Promise<void> {
   }
 }
 
-async function scrapeDay(context: BrowserContext, offset: number): Promise<LiveDaySnapshot> {
+async function scrapeRankings(context: BrowserContext): Promise<Map<string, number>> {
+  const rankings = new Map<string, number>();
+  for (const tour of ["atp", "wta"] as const) {
+    const page = await context.newPage();
+    try {
+      await page.goto(`https://www.flashscore.pl/tenis/rankingi/${tour}/`, {
+        waitUntil: "domcontentloaded",
+        timeout: 45_000,
+      });
+      await dismissConsent(page);
+      await page.locator(".rankingTable__row").first().waitFor({ state: "visible", timeout: 20_000 });
+
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const more = page.getByRole("button", { name: "Więcej", exact: true });
+        if (!(await more.count()) || !(await more.first().isVisible())) break;
+        const previousCount = await page.locator(".rankingTable__row").count();
+        await more.first().click();
+        await page
+          .waitForFunction(
+            (count) => document.querySelectorAll(".rankingTable__row").length > count,
+            previousCount,
+            { timeout: 10_000 },
+          )
+          .catch(() => undefined);
+      }
+
+      for (const [playerId, rank] of parseRankingHtml(await page.content())) {
+        rankings.set(playerId, rank);
+      }
+    } finally {
+      await page.close();
+    }
+  }
+  console.log(`Rankingi ATP/WTA: ${rankings.size} zawodników`);
+  return rankings;
+}
+
+async function scrapeDay(
+  context: BrowserContext,
+  offset: number,
+  rankings: ReadonlyMap<string, number>,
+): Promise<LiveDaySnapshot> {
   const dateStr = dateInWarsaw(offset);
   const page = await context.newPage();
   const feedBodies: string[] = [];
   const pendingFeedReads: Promise<void>[] = [];
   page.on("response", (response) => {
-    if (!/\/x\/feed\/f_2_/.test(response.url())) return;
+    if (!/\/x\/feed\/(?:f_2_|r_2_1)/.test(response.url())) return;
     pendingFeedReads.push(
       response
         .text()
@@ -93,7 +134,7 @@ async function scrapeDay(context: BrowserContext, offset: number): Promise<LiveD
       throw new Error(`Nie znaleziono listy turniejów dla ${dateStr}. Zapisano ${debugFile}.`);
     }
 
-    const matches = parseLiveDayHtml(parserSource, dateStr);
+    const matches = parseLiveDayHtml(parserSource, dateStr, rankings);
     console.log(`${dateStr}: ${matches.length} meczów ATP/WTA`);
     return { dateStr, matches };
   } finally {
@@ -167,8 +208,9 @@ export async function main(): Promise<void> {
   const browser = await chromium.launch({ headless: process.env.HEADLESS !== "0" });
   const context = await browser.newContext({ locale: "pl-PL", timezoneId: "Europe/Warsaw" });
   try {
+    const rankings = await scrapeRankings(context);
     const days: LiveDaySnapshot[] = [];
-    for (const offset of [-1, 0, 1]) days.push(await scrapeDay(context, offset));
+    for (const offset of [-1, 0, 1]) days.push(await scrapeDay(context, offset, rankings));
     if (!days.some((day) => day.matches.length > 0)) {
       throw new Error("Scraper nie znalazł żadnego meczu w całym trzydniowym oknie. Cache nie został zmieniony.");
     }

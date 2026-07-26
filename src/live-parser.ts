@@ -5,7 +5,9 @@ import type { Surface, Tour } from "./types.js";
 
 interface EmbeddedMatchDetails {
   startTime: string | null;
+  playerAId: string | null;
   playerAPhoto: string | null;
+  playerBId: string | null;
   playerBPhoto: string | null;
 }
 
@@ -42,12 +44,29 @@ function parseEmbeddedMatchDetails(source: string): Map<string, EmbeddedMatchDet
         Number.isInteger(unixSeconds) && unixSeconds > 0
           ? new Date(unixSeconds * 1_000).toISOString()
           : null,
+      playerAId: fields.get("PX")?.trim() || null,
       playerAPhoto: photo("OA"),
+      playerBId: fields.get("PY")?.trim() || null,
       playerBPhoto: photo("OB"),
     });
   }
 
   return details;
+}
+
+export function parseRankingHtml(source: string): Map<string, number> {
+  const $ = load(source);
+  const rankings = new Map<string, number>();
+
+  $(".rankingTable__row").each((_, row) => {
+    const link = $(row).find(".rankingTable__href");
+    const playerId = link.attr("href")?.match(/\/zawodnik\/[^/]+\/([^/]+)\//)?.[1];
+    const rankText = $(row).find(".rankingTable__cell--rank").text().trim();
+    const rank = Number(rankText.replace(/\D/g, ""));
+    if (playerId && Number.isInteger(rank) && rank > 0) rankings.set(playerId, rank);
+  });
+
+  return rankings;
 }
 
 function timeZoneOffsetMs(date: Date, timeZone: string): number {
@@ -123,7 +142,11 @@ function scoreWinner(
   return null;
 }
 
-export function parseLiveDayHtml(source: string, dateStr: string): LiveMatch[] {
+export function parseLiveDayHtml(
+  source: string,
+  dateStr: string,
+  rankings: ReadonlyMap<string, number> = new Map(),
+): LiveMatch[] {
   const $ = load(source);
   const matches: LiveMatch[] = [];
   const embeddedDetails = parseEmbeddedMatchDetails(source);
@@ -173,10 +196,10 @@ export function parseLiveDayHtml(source: string, dateStr: string): LiveMatch[] {
           externalId: `flashscore:${id}`,
           playerA,
           playerAPhoto: details?.playerAPhoto ?? null,
-          playerARank: null,
+          playerARank: details?.playerAId ? rankings.get(details.playerAId) ?? null : null,
           playerB,
           playerBPhoto: details?.playerBPhoto ?? null,
-          playerBRank: null,
+          playerBRank: details?.playerBId ? rankings.get(details.playerBId) ?? null : null,
           tournament,
           tour,
           round,

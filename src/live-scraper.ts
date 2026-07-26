@@ -37,10 +37,12 @@ async function selectOffset(page: Page, offset: number): Promise<void> {
 async function assertSelectedDate(page: Page, expected: string): Promise<void> {
   const picker = page.getByTestId("wcl-dayPickerButton");
   if ((await picker.count()) !== 1) throw new Error("Flashscore nie pokazał selektora daty.");
-  const label = await picker.getAttribute("aria-label");
-  const selected = label ? new Date(label).toISOString().slice(0, 10) : "";
-  if (selected !== expected) {
-    throw new Error(`Flashscore wyświetlił dzień ${selected || "nieznany"}, oczekiwano ${expected}.`);
+  const visibleDate = (await picker.innerText()).replace(/\s+/g, " ").trim();
+  const expectedDayMonth = `${expected.slice(8, 10)}/${expected.slice(5, 7)}`;
+  if (!visibleDate.includes(expectedDayMonth)) {
+    throw new Error(
+      `Flashscore wyświetlił dzień ${JSON.stringify(visibleDate)}, oczekiwano ${expectedDayMonth}.`,
+    );
   }
 }
 

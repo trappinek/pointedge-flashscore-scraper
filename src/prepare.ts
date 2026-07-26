@@ -118,7 +118,10 @@ export function stats(rows: PreparedRecord[]) {
   const won = rows.filter(r => r.status === "won").length, profit = rows.reduce((s, r) => s + (r.status === "won" ? r.selectedOdds.value - 1 : -1), 0);
   return { count: rows.length, won, lost: rows.length - won, hitRate: won / rows.length * 100, profit, yield: profit / rows.length * 100 };
 }
-if (isMain(import.meta.url) && process.env.npm_command !== "install") {
+if (
+  isMain(import.meta.url) &&
+  !["install", "ci"].includes(process.env.npm_command ?? "")
+) {
   const count = Math.max(1, envInt("PREPARE_COUNT", 650));
   const rows = prepare(readJson<MatchRecord[]>(DATA_FILE, []), count);
   writeJsonAtomic(READY_FILE, rows);

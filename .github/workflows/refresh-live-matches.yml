@@ -3,7 +3,9 @@ name: Refresh Flashscore matches
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *"
+    # Nadal co 30 minut, ale poza :00 i :30, gdy kolejka GitHub Actions
+    # jest najbardziej obciążona i zaplanowane uruchomienia bywają opóźniane.
+    - cron: "7,37 * * * *"
 
 concurrency:
   group: refresh-flashscore-live

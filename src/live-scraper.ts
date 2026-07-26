@@ -5,6 +5,7 @@ import {
   combineDrawAndStage,
   parseLiveDayHtml,
   parseLiveMatchDetailHtml,
+  parseLiveH2hHtml,
   parseRankingHtml,
 } from "./live-parser.js";
 import type { LiveDaySnapshot, LiveMatch } from "./live-types.js";
@@ -155,11 +156,21 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
     await page.locator(".detail__breadcrumbs").waitFor({ state: "visible", timeout: 12_000 });
     await page.locator(".participant__image").first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
     const detail = parseLiveMatchDetailHtml(await page.content(), match.playerA, match.playerB);
+    const h2hTab = page.getByText("H2H", { exact: true });
+    if (await h2hTab.count()) {
+      await h2hTab.first().click().catch(() => undefined);
+      await page.locator("[class*='h2h']").first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
+      await page.waitForTimeout(500);
+    }
+    const h2h = parseLiveH2hHtml(await page.content(), match.playerA, match.playerB);
     return {
       ...match,
       playerAPhoto: detail.playerAPhoto,
       playerBPhoto: detail.playerBPhoto,
       round: combineDrawAndStage(match.round, detail.round),
+      playerALastMatches: h2h.playerALastMatches,
+      playerBLastMatches: h2h.playerBLastMatches,
+      headToHead: h2h.headToHead,
     };
   } catch (error) {
     console.warn(

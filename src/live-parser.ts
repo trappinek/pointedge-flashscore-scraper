@@ -49,6 +49,12 @@ export interface LiveMatchDetail {
   round: string | null;
 }
 
+export interface LiveH2hDetail {
+  playerALastMatches: string[];
+  playerBLastMatches: string[];
+  headToHead: string[];
+}
+
 export function combineDrawAndStage(draw: string, stage: string | null): string {
   const exactStage = stage?.trim();
   if (!exactStage || exactStage.toLocaleLowerCase("pl-PL") === draw.toLocaleLowerCase("pl-PL")) {
@@ -97,6 +103,53 @@ export function parseLiveMatchDetailHtml(
     playerBPhoto: findPhoto(playerB),
     round: roundMatch?.[1] ?? null,
   };
+}
+
+function compactH2hRow(value: string): string {
+  return value.replace(/\s+/g, " ").replace(/\b(Szczegóły|Details)\b/gi, "").trim();
+}
+
+export function parseLiveH2hHtml(
+  source: string,
+  playerA: string,
+  playerB: string,
+): LiveH2hDetail {
+  const $ = load(source);
+  const result: LiveH2hDetail = {
+    playerALastMatches: [],
+    playerBLastMatches: [],
+    headToHead: [],
+  };
+  const normalizedA = normalizeName(playerA);
+  const normalizedB = normalizeName(playerB);
+
+  $("[class*='h2h__section'], [class*='h2hSection']").each((_, section) => {
+    const container = $(section);
+    const heading = compactH2hRow(
+      container
+        .find("[class*='sectionTitle'], [class*='header']")
+        .first()
+        .text(),
+    );
+    const normalizedHeading = normalizeName(heading);
+    const rows = container
+      .find("[class*='h2h__row'], [class*='h2hRow']")
+      .toArray()
+      .map((row) => compactH2hRow($(row).text()))
+      .filter((row) => row.length > 3)
+      .slice(0, 5);
+
+    if (!rows.length) return;
+    if (/bezposred|headtohead|h2h/i.test(normalizedHeading)) {
+      result.headToHead = rows;
+    } else if (normalizedHeading.includes(normalizedA)) {
+      result.playerALastMatches = rows;
+    } else if (normalizedHeading.includes(normalizedB)) {
+      result.playerBLastMatches = rows;
+    }
+  });
+
+  return result;
 }
 
 export function parseRankingHtml(source: string): Map<string, number> {
@@ -263,9 +316,12 @@ export function parseLiveDayHtml(
           playerA,
           playerAPhoto: null,
           playerARank: details?.playerAId ? rankings.get(details.playerAId) ?? null : null,
+          playerALastMatches: [],
           playerB,
           playerBPhoto: null,
           playerBRank: details?.playerBId ? rankings.get(details.playerBId) ?? null : null,
+          playerBLastMatches: [],
+          headToHead: [],
           tournament,
           tour,
           round,

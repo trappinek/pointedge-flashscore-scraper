@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   combineDrawAndStage,
   parseLiveDayHtml,
+  parseLiveH2hHtml,
   parseLiveMatchDetailHtml,
   warsawDateTimeToIso,
 } from "../src/live-parser.js";
@@ -79,6 +80,35 @@ describe("live Flashscore parser", () => {
       "Turniej główny (Ćwierćfinał)",
     );
     expect(combineDrawAndStage("Kwalifikacje", null)).toBe("Kwalifikacje");
+  });
+
+  it("reads both players' recent matches and direct H2H rows", () => {
+    const detail = parseLiveH2hHtml(
+      `<section class="h2h__section">
+         <h3 class="h2h__sectionTitle">Last matches: Player A</h3>
+         <a class="h2h__row">25.07 Player A - Rival One 2-0 Win</a>
+         <a class="h2h__row">23.07 Rival Two - Player A 1-2 Win</a>
+       </section>
+       <section class="h2h__section">
+         <h3 class="h2h__sectionTitle">Last matches: Player B</h3>
+         <a class="h2h__row">25.07 Player B - Rival Three 0-2 Loss</a>
+       </section>
+       <section class="h2h__section">
+         <h3 class="h2h__sectionTitle">Bezpośrednie mecze</h3>
+         <a class="h2h__row">2025 Player A - Player B 2-1</a>
+       </section>`,
+      "Player A",
+      "Player B",
+    );
+
+    expect(detail).toEqual({
+      playerALastMatches: [
+        "25.07 Player A - Rival One 2-0 Win",
+        "23.07 Rival Two - Player A 1-2 Win",
+      ],
+      playerBLastMatches: ["25.07 Player B - Rival Three 0-2 Loss"],
+      headToHead: ["2025 Player A - Player B 2-1"],
+    });
   });
 
   it("records a retirement reason and identifies the player who retired", () => {

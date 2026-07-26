@@ -6,9 +6,12 @@ export interface LiveMatch {
   playerA: string;
   playerAPhoto: string | null;
   playerARank: number | null;
+  playerALastMatches: string[];
   playerB: string;
   playerBPhoto: string | null;
   playerBRank: number | null;
+  playerBLastMatches: string[];
+  headToHead: string[];
   tournament: string;
   tour: Tour;
   round: string;

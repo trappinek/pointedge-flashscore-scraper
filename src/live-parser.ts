@@ -3,12 +3,51 @@ import type { AnyNode } from "domhandler";
 import type { LiveMatch } from "./live-types.js";
 import type { Surface, Tour } from "./types.js";
 
+interface EmbeddedMatchDetails {
+  startTime: string | null;
+  playerAPhoto: string | null;
+  playerBPhoto: string | null;
+}
+
+const FLASHSCORE_IMAGE_BASE = "https://static.flashscore.com/res/image/data/";
+
 function textNodeValue(element: Cheerio<AnyNode>): string {
   const directText = element
     .contents()
     .toArray()
     .find((node) => node.type === "text");
   return directText && "data" in directText ? directText.data.trim() : element.text().trim();
+}
+
+function parseEmbeddedMatchDetails(source: string): Map<string, EmbeddedMatchDetails> {
+  const details = new Map<string, EmbeddedMatchDetails>();
+
+  for (const chunk of source.split("¬~AA÷").slice(1)) {
+    const eventId = chunk.split("¬", 1)[0]?.trim();
+    if (!eventId) continue;
+
+    const fields = new Map<string, string>();
+    for (const match of chunk.matchAll(/(?:^|¬)([A-Z]{2,3})÷([^¬]*)/g)) {
+      fields.set(match[1], match[2]);
+    }
+
+    const unixSeconds = Number(fields.get("AD"));
+    const photo = (field: "OA" | "OB"): string | null => {
+      const filename = fields.get(field)?.trim();
+      return filename ? `${FLASHSCORE_IMAGE_BASE}${filename}` : null;
+    };
+
+    details.set(eventId, {
+      startTime:
+        Number.isInteger(unixSeconds) && unixSeconds > 0
+          ? new Date(unixSeconds * 1_000).toISOString()
+          : null,
+      playerAPhoto: photo("OA"),
+      playerBPhoto: photo("OB"),
+    });
+  }
+
+  return details;
 }
 
 function timeZoneOffsetMs(date: Date, timeZone: string): number {
@@ -87,6 +126,7 @@ function scoreWinner(
 export function parseLiveDayHtml(source: string, dateStr: string): LiveMatch[] {
   const $ = load(source);
   const matches: LiveMatch[] = [];
+  const embeddedDetails = parseEmbeddedMatchDetails(source);
 
   $(".sportName.tennis").each((_, section) => {
     let tour: Tour | null = null;
@@ -120,25 +160,28 @@ export function parseLiveDayHtml(source: string, dateStr: string): LiveMatch[] {
         if (!id || !playerA || !playerB || !tournament) return;
 
         const timeLabel = element.find(".event__time").text().replace(/\s+/g, " ").trim();
+        const stageLabel = element.find(".event__stage").text().replace(/\s+/g, " ").trim();
         const isLive = element.hasClass("event__match--live");
-        const isFinished = /^Koniec/i.test(timeLabel) || /walkower/i.test(timeLabel);
+        const statusLabel = `${stageLabel} ${timeLabel}`;
+        const isFinished = /Koniec|walkower|po krecz|retired/i.test(statusLabel);
         const status: LiveMatch["status"] = isLive ? "live" : isFinished ? "finished" : "upcoming";
         const scheduledTime = /^\d{2}:\d{2}$/.test(timeLabel) ? timeLabel : "12:00";
         const result = status === "finished" ? parseResult(element) : null;
+        const details = embeddedDetails.get(id);
 
         matches.push({
           externalId: `flashscore:${id}`,
           playerA,
-          playerAPhoto: null,
+          playerAPhoto: details?.playerAPhoto ?? null,
           playerARank: null,
           playerB,
-          playerBPhoto: null,
+          playerBPhoto: details?.playerBPhoto ?? null,
           playerBRank: null,
           tournament,
           tour,
           round,
           surface,
-          startTime: warsawDateTimeToIso(dateStr, scheduledTime),
+          startTime: details?.startTime ?? warsawDateTimeToIso(dateStr, scheduledTime),
           status,
           result,
           winner: status === "finished" ? scoreWinner(element) : null,

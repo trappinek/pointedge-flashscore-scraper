@@ -18,6 +18,8 @@ describe("live Flashscore parser", () => {
       result: "7-6 6-3",
       winner: "A",
       surface: "clay",
+      playerAPhoto: "https://static.flashscore.com/res/image/data/home-player.png",
+      playerBPhoto: "https://static.flashscore.com/res/image/data/away-player.png",
     });
 
     const live = rows.find((row) => row.externalId === "flashscore:LIVEMAT1");

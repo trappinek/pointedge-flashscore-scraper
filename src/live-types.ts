@@ -3,10 +3,10 @@ import type { Surface, Tour } from "./types.js";
 export interface LiveMatch {
   externalId: string;
   playerA: string;
-  playerAPhoto: null;
+  playerAPhoto: string | null;
   playerARank: null;
   playerB: string;
-  playerBPhoto: null;
+  playerBPhoto: string | null;
   playerBRank: null;
   tournament: string;
   tour: Tour;

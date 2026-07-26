@@ -51,6 +51,19 @@ async function assertSelectedDate(page: Page, expected: string): Promise<void> {
 async function scrapeDay(context: BrowserContext, offset: number): Promise<LiveDaySnapshot> {
   const dateStr = dateInWarsaw(offset);
   const page = await context.newPage();
+  const feedBodies: string[] = [];
+  const pendingFeedReads: Promise<void>[] = [];
+  page.on("response", (response) => {
+    if (!/\/x\/feed\/f_2_/.test(response.url())) return;
+    pendingFeedReads.push(
+      response
+        .text()
+        .then((body) => {
+          feedBodies.push(body);
+        })
+        .catch(() => undefined),
+    );
+  });
   try {
     await page.goto(FLASHSCORE_URL, { waitUntil: "domcontentloaded", timeout: 45_000 });
     await dismissConsent(page);
@@ -65,7 +78,14 @@ async function scrapeDay(context: BrowserContext, offset: number): Promise<LiveD
       throw new Error("BLOCKED: Flashscore wyświetlił CAPTCHA lub blokadę antybotową.");
     }
 
+    await Promise.allSettled(pendingFeedReads);
     const html = await page.content();
+    const parserSource = `${html}\n${feedBodies.join("\n")}`;
+    if (process.env.LIVE_SAVE_HTML === "1") {
+      const debugFile = path.join(ROOT, "screenshots", `live-${dateStr}.html`);
+      fs.mkdirSync(path.dirname(debugFile), { recursive: true });
+      fs.writeFileSync(debugFile, parserSource, "utf8");
+    }
     if (!/sportName tennis|headerLeague__wrapper/.test(html)) {
       const debugFile = path.join(ROOT, "screenshots", `live-${dateStr}.html`);
       fs.mkdirSync(path.dirname(debugFile), { recursive: true });
@@ -73,7 +93,7 @@ async function scrapeDay(context: BrowserContext, offset: number): Promise<LiveD
       throw new Error(`Nie znaleziono listy turniejów dla ${dateStr}. Zapisano ${debugFile}.`);
     }
 
-    const matches = parseLiveDayHtml(html, dateStr);
+    const matches = parseLiveDayHtml(parserSource, dateStr);
     console.log(`${dateStr}: ${matches.length} meczów ATP/WTA`);
     return { dateStr, matches };
   } finally {

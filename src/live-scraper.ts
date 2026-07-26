@@ -29,6 +29,7 @@ async function selectOffset(page: Page, offset: number): Promise<void> {
   if (offset === 0) return;
   const label = offset < 0 ? /Poprzedni dzień|Previous day/i : /Następny dzień|Next day/i;
   const button = page.getByRole("button", { name: label });
+  await button.first().waitFor({ state: "visible", timeout: 20_000 }).catch(() => undefined);
   if ((await button.count()) !== 1) throw new Error(`Nie znaleziono nawigacji dnia dla offsetu ${offset}.`);
   await button.click();
   await page.waitForTimeout(900);
@@ -52,8 +53,8 @@ async function scrapeDay(context: BrowserContext, offset: number): Promise<LiveD
   try {
     await page.goto(FLASHSCORE_URL, { waitUntil: "domcontentloaded", timeout: 45_000 });
     await dismissConsent(page);
-    await selectOffset(page, offset);
     await page.getByTestId("wcl-dayPickerButton").waitFor({ state: "visible", timeout: 20_000 });
+    await selectOffset(page, offset);
     await assertSelectedDate(page, dateStr);
     await page.waitForTimeout(1_200);
 

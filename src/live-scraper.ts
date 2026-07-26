@@ -7,6 +7,7 @@ import { ROOT, isMain, writeJsonAtomic } from "./utils.js";
 
 const FLASHSCORE_URL = "https://www.flashscore.pl/tenis/";
 const OUTPUT_FILE = path.join(ROOT, "data", "flashscore-live-cache.json");
+const DEFAULT_INGEST_URL = "https://www.pointedge.pl/api/cron/ingest-flashscore";
 
 function dateInWarsaw(offset: number): string {
   const instant = new Date(Date.now() + offset * 86_400_000);
@@ -81,15 +82,24 @@ async function scrapeDay(context: BrowserContext, offset: number): Promise<LiveD
 }
 
 async function upload(days: LiveDaySnapshot[]): Promise<void> {
-  const endpoint = process.env.POINTEDGE_INGEST_URL?.trim();
+  const endpoint = process.env.POINTEDGE_INGEST_URL?.trim() || DEFAULT_INGEST_URL;
   const secret = process.env.CRON_SECRET?.trim();
-  if (!endpoint || !secret) {
+  if (!secret) {
     if (process.env.LIVE_REQUIRE_UPLOAD === "1") {
-      throw new Error("Brak POINTEDGE_INGEST_URL lub CRON_SECRET — upload do PointEdge jest wymagany.");
+      throw new Error("Brak CRON_SECRET — upload do PointEdge jest wymagany.");
     }
     console.log(`Brak konfiguracji uploadu. Dane zapisano lokalnie w ${OUTPUT_FILE}.`);
     return;
   }
+
+  const endpointUrl = new URL(endpoint);
+  if (endpointUrl.pathname !== "/api/cron/ingest-flashscore") {
+    throw new Error(
+      `Niepoprawny POINTEDGE_INGEST_URL: ${endpointUrl.origin}${endpointUrl.pathname}. ` +
+        "Adres musi kończyć się na /api/cron/ingest-flashscore.",
+    );
+  }
+  console.log(`Wysyłanie snapshotu do ${endpointUrl.origin}${endpointUrl.pathname}`);
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -102,7 +112,35 @@ async function upload(days: LiveDaySnapshot[]): Promise<void> {
   if (!response.ok) {
     throw new Error(`PointEdge odrzucił dane: HTTP ${response.status} ${await response.text()}`);
   }
-  console.log(`Neon zaktualizowany: ${await response.text()}`);
+
+  const responseText = await response.text();
+  let result: unknown;
+  try {
+    result = JSON.parse(responseText);
+  } catch {
+    throw new Error(
+      `PointEdge zwrócił HTTP ${response.status}, ale odpowiedź nie jest JSON-em. ` +
+        `Sprawdź POINTEDGE_INGEST_URL. Odpowiedź: ${responseText.slice(0, 200)}`,
+    );
+  }
+
+  const expectedCounts = Object.fromEntries(days.map((day) => [day.dateStr, day.matches.length]));
+  const updated =
+    result && typeof result === "object" && "updated" in result
+      ? (result.updated as Record<string, unknown>)
+      : null;
+  const confirmed = Object.entries(expectedCounts).every(
+    ([dateStr, count]) => Number(updated?.[dateStr]) === count,
+  );
+  if (!confirmed) {
+    throw new Error(
+      `PointEdge nie potwierdził zapisu pełnego snapshotu. Oczekiwano ${JSON.stringify(
+        expectedCounts,
+      )}, otrzymano ${responseText.slice(0, 500)}`,
+    );
+  }
+
+  console.log(`Neon zaktualizowany: ${JSON.stringify(updated)}`);
 }
 
 export async function main(): Promise<void> {

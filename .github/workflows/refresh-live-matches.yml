@@ -25,5 +25,5 @@ jobs:
         env:
           HEADLESS: "1"
           LIVE_REQUIRE_UPLOAD: "1"
-          POINTEDGE_INGEST_URL: ${{ secrets.POINTEDGE_INGEST_URL }}
+          POINTEDGE_INGEST_URL: "https://www.pointedge.pl/api/cron/ingest-flashscore"
           CRON_SECRET: ${{ secrets.CRON_SECRET }}

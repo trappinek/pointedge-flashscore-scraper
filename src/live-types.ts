@@ -18,6 +18,8 @@ export interface LiveMatch {
   result: string | null;
   winner: "A" | "B" | null;
   voided: boolean;
+  voidReason: "retirement" | "walkover" | "cancelled" | "postponed" | "abandoned" | null;
+  retiredPlayer: "A" | "B" | null;
 }
 
 export interface LiveDaySnapshot {

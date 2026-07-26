@@ -35,10 +35,20 @@ describe("live Flashscore parser", () => {
       playerARank: 12,
       playerBRank: 34,
       voided: false,
+      voidReason: null,
+      retiredPlayer: null,
     });
 
     const live = rows.find((row) => row.externalId === "flashscore:LIVEMAT1");
-    expect(live).toMatchObject({ tour: "WTA", status: "live", result: null, winner: null, voided: false });
+    expect(live).toMatchObject({
+      tour: "WTA",
+      status: "live",
+      result: null,
+      winner: null,
+      voided: false,
+      voidReason: null,
+      retiredPlayer: null,
+    });
 
     const upcoming = rows.find((row) => row.externalId === "flashscore:UPCOMING");
     expect(upcoming).toMatchObject({
@@ -69,6 +79,33 @@ describe("live Flashscore parser", () => {
       "Turniej główny (Ćwierćfinał)",
     );
     expect(combineDrawAndStage("Kwalifikacje", null)).toBe("Kwalifikacje");
+  });
+
+  it("records a retirement reason and identifies the player who retired", () => {
+    const retired = parseLiveDayHtml(
+      `<div class="sportName tennis">
+        <div class="headerLeague__wrapper">
+          <span class="headerLeague__category-text">ATP - SINGIEL</span>
+          <a class="headerLeague__title" title="Los Cabos (Meksyk), twarda"></a>
+        </div>
+        <div id="g_2_RETIRE01" data-event-row="true">
+          <div class="event__time">Po kreczu</div>
+          <div class="event__participant event__participant--home fontExtraBold">Gracz A.</div>
+          <div class="event__participant event__participant--away">Gracz B.</div>
+          <div class="event__score event__score--home">1</div>
+          <div class="event__score event__score--away">0</div>
+        </div>
+      </div>`,
+      "2026-07-26",
+    )[0];
+
+    expect(retired).toMatchObject({
+      status: "finished",
+      winner: null,
+      voided: true,
+      voidReason: "retirement",
+      retiredPlayer: "B",
+    });
   });
 
   it("preserves the Warsaw local hour in winter and summer", () => {

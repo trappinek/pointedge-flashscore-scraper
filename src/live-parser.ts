@@ -187,8 +187,15 @@ function scoreWinner(
   return null;
 }
 
-function isVoidedStatus(value: string): boolean {
-  return /walkower|po krecz|krecz|retired|odwołan|przełożon|anulowan/i.test(value);
+function parseVoidReason(
+  value: string,
+): LiveMatch["voidReason"] {
+  if (/po krecz|krecz|retired/i.test(value)) return "retirement";
+  if (/walkower/i.test(value)) return "walkover";
+  if (/odwołan/i.test(value)) return "cancelled";
+  if (/przełożon/i.test(value)) return "postponed";
+  if (/anulowan|przerwan|abandoned/i.test(value)) return "abandoned";
+  return null;
 }
 
 export function parseLiveDayHtml(
@@ -235,12 +242,20 @@ export function parseLiveDayHtml(
         const stageLabel = element.find(".event__stage").text().replace(/\s+/g, " ").trim();
         const isLive = element.hasClass("event__match--live");
         const statusLabel = `${stageLabel} ${timeLabel}`;
-        const voided = isVoidedStatus(`${statusLabel} ${rowText}`);
+        const voidReason = parseVoidReason(`${statusLabel} ${rowText}`);
+        const voided = voidReason !== null;
         const isFinished = /Koniec/i.test(statusLabel) || voided;
         const status: LiveMatch["status"] = isFinished ? "finished" : isLive ? "live" : "upcoming";
         const scheduledTime = /^\d{2}:\d{2}$/.test(timeLabel) ? timeLabel : "12:00";
         const result = status === "finished" ? parseResult(element) : null;
         const details = embeddedDetails.get(id);
+        const displayedWinner = status === "finished" ? scoreWinner(element) : null;
+        const retiredPlayer =
+          voidReason === "retirement" && displayedWinner
+            ? displayedWinner === "A"
+              ? "B"
+              : "A"
+            : null;
 
         matches.push({
           externalId: `flashscore:${id}`,
@@ -258,8 +273,10 @@ export function parseLiveDayHtml(
           startTime: details?.startTime ?? warsawDateTimeToIso(dateStr, scheduledTime),
           status,
           result,
-          winner: status === "finished" && !voided ? scoreWinner(element) : null,
+          winner: status === "finished" && !voided ? displayedWinner : null,
           voided,
+          voidReason,
+          retiredPlayer,
         });
       });
   });

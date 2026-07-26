@@ -1,0 +1,28 @@
+{
+  "name": "flashscore-tennis-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone Flashscore ATP/WTA history scraper for Windows",
+  "type": "module",
+  "scripts": {
+    "install:browser": "playwright install chromium",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "scrape": "tsx src/scraper.ts",
+    "scrape:live": "tsx src/live-scraper.ts",
+    "prepare": "tsx src/prepare.ts",
+    "export-sql": "tsx src/export-sql.ts",
+    "diagnose": "tsx src/diagnose.ts"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "cheerio": "^1.1.0",
+    "playwright": "^1.55.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}

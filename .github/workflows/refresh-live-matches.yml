@@ -1,0 +1,29 @@
+name: Refresh Flashscore matches
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *"
+
+concurrency:
+  group: refresh-flashscore-live
+  cancel-in-progress: true
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run scrape:live
+        env:
+          HEADLESS: "1"
+          LIVE_REQUIRE_UPLOAD: "1"
+          POINTEDGE_INGEST_URL: ${{ secrets.POINTEDGE_INGEST_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

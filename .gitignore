@@ -1,0 +1,9 @@
+node_modules/
+dist/
+data/*.json
+data/*.sql
+logs/*
+screenshots/*
+!data/.gitkeep
+!logs/.gitkeep
+!screenshots/.gitkeep

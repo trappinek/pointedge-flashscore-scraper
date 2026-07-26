@@ -1,7 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseLiveDayHtml, warsawDateTimeToIso } from "../src/live-parser.js";
+import {
+  parseLiveDayHtml,
+  parseLiveMatchDetailHtml,
+  warsawDateTimeToIso,
+} from "../src/live-parser.js";
 
 const fixture = fs.readFileSync(path.join(process.cwd(), "tests", "fixtures", "live-day.html"), "utf8");
 
@@ -25,8 +29,8 @@ describe("live Flashscore parser", () => {
       result: "7-6 6-3",
       winner: "A",
       surface: "clay",
-      playerAPhoto: "https://static.flashscore.com/res/image/data/home-player.png",
-      playerBPhoto: "https://static.flashscore.com/res/image/data/away-player.png",
+      playerAPhoto: null,
+      playerBPhoto: null,
       playerARank: 12,
       playerBRank: 34,
     });
@@ -38,6 +42,22 @@ describe("live Flashscore parser", () => {
     expect(upcoming).toMatchObject({
       status: "upcoming",
       startTime: "2026-07-26T16:30:00.000Z",
+    });
+  });
+
+  it("reads real player photos and the tournament stage from match details", () => {
+    const detail = parseLiveMatchDetailHtml(
+      `<div class="detail__breadcrumbs">Tenis ATP - SINGIEL Estoril, ziemna - Finał</div>
+       <img class="participant__image" alt="van Assche L." src="https://static.flashscore.com/res/image/data/real-home.png">
+       <img class="participant__image" alt="Blockx A." src="https://static.flashscore.com/res/image/data/real-away.png">`,
+      "van Assche L.",
+      "Blockx A.",
+    );
+
+    expect(detail).toEqual({
+      playerAPhoto: "https://static.flashscore.com/res/image/data/real-home.png",
+      playerBPhoto: "https://static.flashscore.com/res/image/data/real-away.png",
+      round: "Finał",
     });
   });
 

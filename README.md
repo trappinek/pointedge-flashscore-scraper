@@ -1,6 +1,6 @@
 # Flashscore Tennis Scraper
 
-Samodzielne narzędzie do zebrania zakończonych meczów ATP/WTA Singles z publicznych stron Flashscore, przygotowania technicznego zbioru 650 historycznych rekordów i wygenerowania SQL dla PostgreSQL/Neon. Nie używa API ani kodu PointEdge.
+Samodzielne narzędzie do zebrania zakończonych meczów ATP/WTA Singles z publicznych stron Flashscore, przygotowania technicznego zbioru historycznych rekordów i wygenerowania SQL dla PostgreSQL/Neon. Nie używa API ani kodu PointEdge.
 
 ## Wymagania systemowe
 
@@ -23,12 +23,15 @@ npm run install:browser
 ```bat
 set HISTORY_FROM=2024-08-01
 set HISTORY_TO=2026-06-30
-set HISTORY_POOL=900
+set HISTORY_POOL=1200
+set PREPARE_COUNT=500
 set HEADLESS=0
 set SCRAPE_DELAY_MS=2000
 set MAX_RETRIES=3
 set MIN_ODDS=1.8
-set MAX_ODDS=4.0
+set MAX_ODDS=3.0
+set TARGET_HIT_RATE=60
+set TARGET_YIELD=10
 npm run scrape
 npm run prepare
 npm run export-sql
@@ -48,19 +51,21 @@ npm run scrape
 ```powershell
 $env:HISTORY_FROM="2024-08-01"
 $env:HISTORY_TO="2026-06-30"
-$env:HISTORY_POOL="900"
-$env:PREPARE_COUNT="650"
+$env:HISTORY_POOL="1200"
+$env:PREPARE_COUNT="500"
 $env:HEADLESS="0"
 $env:SCRAPE_DELAY_MS="2000"
 $env:MAX_RETRIES="3"
 $env:MIN_ODDS="1.8"
-$env:MAX_ODDS="4.0"
+$env:MAX_ODDS="3.0"
+$env:TARGET_HIT_RATE="60"
+$env:TARGET_YIELD="10"
 npm run scrape
 npm run prepare
 npm run export-sql
 ```
 
-`HEADLESS=0` pokazuje przeglądarkę, a `HEADLESS=1` uruchamia ją w tle. `SCRAPE_DELAY_MS` ustala przerwę między meczami, `MAX_RETRIES` ogranicza ponowienia, a `HISTORY_POOL` ustala docelową pulę.
+`HEADLESS=0` pokazuje przeglądarkę, a `HEADLESS=1` uruchamia ją w tle. `SCRAPE_DELAY_MS` ustala przerwę między meczami, `MAX_RETRIES` ogranicza ponowienia, a `HISTORY_POOL` ustala docelową pulę. `TARGET_HIT_RATE` i `TARGET_YIELD` są wartościami procentowymi. Przy ustawieniach 60 i 10 generator wybiera dokładnie 500 rekordów, około 300 wygranych i 200 przegranych oraz przerywa działanie, jeśli pula nie pozwala osiągnąć celu.
 
 ### Szybka próba na 5 rekordach
 
@@ -103,7 +108,7 @@ Jeżeli scraper zapisze pięć kompletnych meczów, `prepare` utworzy pięć rek
 ## Pliki wynikowe i wznowienie
 
 - `data/flashscore-atp-wta.json` — checkpoint surowych, zweryfikowanych meczów.
-- `data/pointedge-history-ready.json` — dokładnie 650 przygotowanych rekordów.
+- `data/pointedge-history-ready.json` — liczba rekordów ustawiona przez `PREPARE_COUNT`.
 - `data/pointedge-neon-import.sql` — gotowy, transakcyjny i idempotentny import.
 - `logs/errors.log` — błędy i ponowienia.
 - `screenshots/*.png` oraz `*.html` — stan strony przy błędzie selektora.

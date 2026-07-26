@@ -1,8 +1,8 @@
 import { chromium, type BrowserContext, type Page } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
-import { parseLiveDayHtml, parseRankingHtml } from "./live-parser.js";
-import type { LiveDaySnapshot } from "./live-types.js";
+import { parseLiveDayHtml, parseLiveMatchDetailHtml, parseRankingHtml } from "./live-parser.js";
+import type { LiveDaySnapshot, LiveMatch } from "./live-types.js";
 import { ROOT, isMain, writeJsonAtomic } from "./utils.js";
 
 const FLASHSCORE_URL = "https://www.flashscore.pl/tenis/";
@@ -142,6 +142,55 @@ async function scrapeDay(
   }
 }
 
+async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<LiveMatch> {
+  if (!match.sourceUrl) return match;
+  const page = await context.newPage();
+  try {
+    await page.goto(match.sourceUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
+    await page.locator(".detail__breadcrumbs").waitFor({ state: "visible", timeout: 12_000 });
+    await page.locator(".participant__image").first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
+    const detail = parseLiveMatchDetailHtml(await page.content(), match.playerA, match.playerB);
+    return {
+      ...match,
+      playerAPhoto: detail.playerAPhoto,
+      playerBPhoto: detail.playerBPhoto,
+      round: detail.round ?? match.round,
+    };
+  } catch (error) {
+    console.warn(
+      `Nie udało się pobrać zdjęć/rundy dla ${match.playerA} - ${match.playerB}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return match;
+  } finally {
+    await page.close();
+  }
+}
+
+async function enrichDays(context: BrowserContext, days: LiveDaySnapshot[]): Promise<LiveDaySnapshot[]> {
+  const queue = days.flatMap((day, dayIndex) =>
+    day.matches.map((match, matchIndex) => ({ dayIndex, matchIndex, match })),
+  );
+  const enriched = days.map((day) => ({ ...day, matches: [...day.matches] }));
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(5, queue.length) }, async () => {
+    while (cursor < queue.length) {
+      const item = queue[cursor++];
+      enriched[item.dayIndex].matches[item.matchIndex] = await enrichMatch(context, item.match);
+    }
+  });
+  await Promise.all(workers);
+  const withPhotos = enriched.flatMap((day) => day.matches).filter(
+    (match) => match.playerAPhoto || match.playerBPhoto,
+  ).length;
+  const withSpecificRound = enriched.flatMap((day) => day.matches).filter(
+    (match) => !/^(Kwalifikacje|Turniej główny)$/i.test(match.round),
+  ).length;
+  console.log(`Szczegóły meczów: zdjęcia ${withPhotos}/${queue.length}, dokładna runda ${withSpecificRound}/${queue.length}`);
+  return enriched;
+}
+
 async function upload(days: LiveDaySnapshot[]): Promise<void> {
   const endpoint = process.env.POINTEDGE_INGEST_URL?.trim() || DEFAULT_INGEST_URL;
   const secret = process.env.CRON_SECRET?.trim();
@@ -209,11 +258,12 @@ export async function main(): Promise<void> {
   const context = await browser.newContext({ locale: "pl-PL", timezoneId: "Europe/Warsaw" });
   try {
     const rankings = await scrapeRankings(context);
-    const days: LiveDaySnapshot[] = [];
+    let days: LiveDaySnapshot[] = [];
     for (const offset of [-1, 0, 1]) days.push(await scrapeDay(context, offset, rankings));
     if (!days.some((day) => day.matches.length > 0)) {
       throw new Error("Scraper nie znalazł żadnego meczu w całym trzydniowym oknie. Cache nie został zmieniony.");
     }
+    days = await enrichDays(context, days);
     writeJsonAtomic(OUTPUT_FILE, { generatedAt: new Date().toISOString(), days });
     await upload(days);
   } finally {

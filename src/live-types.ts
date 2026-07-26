@@ -2,6 +2,7 @@ import type { Surface, Tour } from "./types.js";
 
 export interface LiveMatch {
   externalId: string;
+  sourceUrl?: string;
   playerA: string;
   playerAPhoto: string | null;
   playerARank: number | null;

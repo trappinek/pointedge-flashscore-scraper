@@ -36,4 +36,24 @@ describe("prepare", () => {
     expect(out.every(x => x.selectedOdds.value >= 1.8 && x.selectedOdds.value <= 4)).toBe(true);
     expect(out.some(x => x.flashscoreId === "id0")).toBe(false);
   });
+  it("targets 60% hit rate and about 10% yield", () => {
+    const rows = Array.from({ length: 800 }, (_, i) => {
+      const row = sample(i);
+      row.winner = i % 2 ? "home" : "away";
+      row.odds[row.winner].value = 1.8 + (i % 8) / 100;
+      row.odds[oppositeForTest(row.winner)].value = 1.9 + (i % 111) / 100;
+      return row;
+    });
+    const out = prepare(rows, 500, { hitRatePercent: 60, yieldPercent: 10 });
+    const result = stats(out);
+    expect(result.count).toBe(500);
+    expect(result.hitRate).toBe(60);
+    expect(result.yield).toBeGreaterThanOrEqual(9.75);
+    expect(result.yield).toBeLessThanOrEqual(10.25);
+    expect(out.every((row) => row.selectedOdds.value >= 1.8 && row.selectedOdds.value <= 4)).toBe(true);
+  });
 });
+
+function oppositeForTest(side: "home" | "away"): "home" | "away" {
+  return side === "home" ? "away" : "home";
+}

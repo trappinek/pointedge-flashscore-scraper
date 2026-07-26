@@ -6,12 +6,8 @@ import type { Surface, Tour } from "./types.js";
 interface EmbeddedMatchDetails {
   startTime: string | null;
   playerAId: string | null;
-  playerAPhoto: string | null;
   playerBId: string | null;
-  playerBPhoto: string | null;
 }
-
-const FLASHSCORE_IMAGE_BASE = "https://static.flashscore.com/res/image/data/";
 
 function textNodeValue(element: Cheerio<AnyNode>): string {
   const directText = element
@@ -34,24 +30,65 @@ function parseEmbeddedMatchDetails(source: string): Map<string, EmbeddedMatchDet
     }
 
     const unixSeconds = Number(fields.get("AD"));
-    const photo = (field: "OA" | "OB"): string | null => {
-      const filename = fields.get(field)?.trim();
-      return filename ? `${FLASHSCORE_IMAGE_BASE}${filename}` : null;
-    };
-
     details.set(eventId, {
       startTime:
         Number.isInteger(unixSeconds) && unixSeconds > 0
           ? new Date(unixSeconds * 1_000).toISOString()
           : null,
       playerAId: fields.get("PX")?.trim() || null,
-      playerAPhoto: photo("OA"),
       playerBId: fields.get("PY")?.trim() || null,
-      playerBPhoto: photo("OB"),
     });
   }
 
   return details;
+}
+
+export interface LiveMatchDetail {
+  playerAPhoto: string | null;
+  playerBPhoto: string | null;
+  round: string | null;
+}
+
+function normalizeName(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^\p{Letter}\p{Number}]/gu, "")
+    .toLowerCase();
+}
+
+export function parseLiveMatchDetailHtml(
+  source: string,
+  playerA: string,
+  playerB: string,
+): LiveMatchDetail {
+  const $ = load(source);
+  const photos = $(".participant__image")
+    .toArray()
+    .map((image) => ({
+      alt: $(image).attr("alt")?.trim() ?? "",
+      src: $(image).attr("src")?.trim() ?? "",
+    }))
+    .filter(({ src }) => /^https:\/\/static\.flashscore\.com\/res\/image\/data\/.+\.png$/i.test(src));
+
+  const findPhoto = (name: string): string | null => {
+    const normalized = normalizeName(name);
+    return photos.find(({ alt }) => {
+      const normalizedAlt = normalizeName(alt);
+      return normalizedAlt === normalized || normalizedAlt.startsWith(normalized) || normalized.startsWith(normalizedAlt);
+    })?.src ?? null;
+  };
+
+  const breadcrumbs = $(".detail__breadcrumbs").text().replace(/\s+/g, " ").trim();
+  const roundMatch = breadcrumbs.match(
+    /\s-\s(Finał|Półfinał(?:y)?|Ćwierćfinał(?:y)?|1\/8 finału|1\/16 finału|Runda \d+|Kwalifikacje(?:\s*-\s*runda \d+)?)(?:Nowe okno)?$/i,
+  );
+
+  return {
+    playerAPhoto: findPhoto(playerA),
+    playerBPhoto: findPhoto(playerB),
+    round: roundMatch?.[1] ?? null,
+  };
 }
 
 export function parseRankingHtml(source: string): Map<string, number> {
@@ -178,6 +215,7 @@ export function parseLiveDayHtml(
         if (/odwołan|przełożon|anulowan/i.test(rowText)) return;
 
         const id = element.attr("id")?.split("_").pop();
+        const sourceUrl = element.find(".eventRowLink").attr("href");
         const playerA = element.find(".event__participant--home").text().trim();
         const playerB = element.find(".event__participant--away").text().trim();
         if (!id || !playerA || !playerB || !tournament) return;
@@ -194,11 +232,12 @@ export function parseLiveDayHtml(
 
         matches.push({
           externalId: `flashscore:${id}`,
+          sourceUrl: sourceUrl ? new URL(sourceUrl, "https://www.flashscore.pl").toString() : undefined,
           playerA,
-          playerAPhoto: details?.playerAPhoto ?? null,
+          playerAPhoto: null,
           playerARank: details?.playerAId ? rankings.get(details.playerAId) ?? null : null,
           playerB,
-          playerBPhoto: details?.playerBPhoto ?? null,
+          playerBPhoto: null,
           playerBRank: details?.playerBId ? rankings.get(details.playerBId) ?? null : null,
           tournament,
           tour,

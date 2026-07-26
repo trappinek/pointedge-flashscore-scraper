@@ -109,6 +109,26 @@ function compactH2hRow(value: string): string {
   return value.replace(/\s+/g, " ").replace(/\b(Szczegóły|Details)\b/gi, "").trim();
 }
 
+function formatH2hRow($: ReturnType<typeof load>, row: AnyNode): string {
+  const element = $(row);
+  const date = element.find("[data-testid='wcl-stageTime']").first().text().trim();
+  const event =
+    element.find(".h2h__event").attr("title")?.trim() ??
+    element.find(".h2h__event").text().trim();
+  const players = element
+    .find(".h2h__participant")
+    .toArray()
+    .map((participant) => compactH2hRow($(participant).text()))
+    .filter(Boolean);
+  const rawScore = element.find(".h2h__result").text().replace(/\s+/g, "").trim();
+  const score = /^\d{2}$/.test(rawScore) ? `${rawScore[0]}–${rawScore[1]}` : rawScore;
+  const marker = element.find(".h2h__icon").text().trim().toUpperCase();
+  const outcome = marker === "Z" ? "Wygrana" : marker === "P" ? "Przegrana" : "";
+
+  if (players.length < 2) return compactH2hRow(element.text());
+  return [date, event, players.join(" vs "), score, outcome].filter(Boolean).join(" · ");
+}
+
 export function parseLiveH2hHtml(
   source: string,
   playerA: string,
@@ -127,7 +147,7 @@ export function parseLiveH2hHtml(
     const container = $(section);
     const heading = compactH2hRow(
       container
-        .find("[class*='sectionTitle'], [class*='header']")
+        .find("[data-testid='wcl-headerSection-text'], [class*='sectionTitle'], [class*='header']")
         .first()
         .text(),
     );
@@ -135,12 +155,12 @@ export function parseLiveH2hHtml(
     const rows = container
       .find("[class*='h2h__row'], [class*='h2hRow']")
       .toArray()
-      .map((row) => compactH2hRow($(row).text()))
+      .map((row) => formatH2hRow($, row))
       .filter((row) => row.length > 3)
       .slice(0, 5);
 
     if (!rows.length) return;
-    if (/bezposred|headtohead|h2h/i.test(normalizedHeading)) {
+    if (/bezposred|pojedynki|headtohead|h2h/i.test(normalizedHeading)) {
       result.headToHead = rows;
     } else if (normalizedHeading.includes(normalizedA)) {
       result.playerALastMatches = rows;

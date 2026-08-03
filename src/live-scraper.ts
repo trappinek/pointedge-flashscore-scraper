@@ -157,6 +157,37 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
     await page.locator(".detail__breadcrumbs").waitFor({ state: "visible", timeout: 12_000 });
     await page.locator(".participant__image").first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
     const detail = parseLiveMatchDetailHtml(await page.content(), match.playerA, match.playerB);
+
+    // Flashscore zmienia tekst i strukturę zakładki zależnie od domeny/języka.
+    // Najpierw klikamy widoczny link, a gdy SPA go nie udostępni — używamy
+    // stabilnych tras hash dla wersji polskiej i angielskiej.
+    const oddsRows = page.locator(
+      "[data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW'], [data-testid*='bookmaker'], [class*='oddsRow']",
+    );
+    const oddsCandidates = page.locator(
+      "a[href*='odds-comparison'], a[href*='zestawienie-kurs'], [role='tab'], [role='button']",
+    ).filter({ hasText: /Kursy|Odds/i });
+    for (let index = 0; index < await oddsCandidates.count(); index++) {
+      const candidate = oddsCandidates.nth(index);
+      if (await candidate.isVisible().catch(() => false)) {
+        await candidate.click().catch(() => undefined);
+        break;
+      }
+    }
+    await oddsRows.first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
+    if (!(await oddsRows.count())) {
+      const baseUrl = match.sourceUrl.split("#")[0].replace(/\/$/, "");
+      for (const route of [
+        "#/zestawienie-kursow/home-away/koniec-meczu",
+        "#/odds-comparison/home-away/full-time",
+      ]) {
+        await page.goto(`${baseUrl}/${route}`, { waitUntil: "domcontentloaded", timeout: 20_000 }).catch(() => undefined);
+        await oddsRows.first().waitFor({ state: "visible", timeout: 6_000 }).catch(() => undefined);
+        if (await oddsRows.count()) break;
+      }
+    }
+    const odds = parseAllOddsRows(await page.content());
+
     const h2hTab = page.getByText("H2H", { exact: true });
     if (await h2hTab.count()) {
       await h2hTab.first().click().catch(() => undefined);
@@ -164,14 +195,6 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
       await page.waitForTimeout(500);
     }
     const h2h = parseLiveH2hHtml(await page.content(), match.playerA, match.playerB);
-    const oddsTab = page.getByText(/^(Kursy|Odds)$/i, { exact: true });
-    if (await oddsTab.count()) {
-      await oddsTab.first().click().catch(() => undefined);
-      await page.locator("[data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW'], [data-testid*='bookmaker']").first()
-        .waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
-      await page.waitForTimeout(500);
-    }
-    const odds = parseAllOddsRows(await page.content());
     return {
       ...match,
       playerAPhoto: detail.playerAPhoto,
@@ -213,7 +236,11 @@ async function enrichDays(context: BrowserContext, days: LiveDaySnapshot[]): Pro
   const withSpecificRound = enriched.flatMap((day) => day.matches).filter(
     (match) => /\(.+\)$/.test(match.round),
   ).length;
+  const withOdds = enriched.flatMap((day) => day.matches).filter(
+    (match) => match.odds.length > 0,
+  ).length;
   console.log(`Szczegóły meczów: zdjęcia ${withPhotos}/${queue.length}, dokładna runda ${withSpecificRound}/${queue.length}`);
+  console.log(`Kursy bukmacherow: ${withOdds}/${queue.length} meczow`);
   return enriched;
 }
 

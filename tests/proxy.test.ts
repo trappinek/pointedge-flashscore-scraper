@@ -5,6 +5,7 @@ describe("public proxy parsing", () => {
   it("normalizes ip:port entries", () => {
     expect(normalizeProxyServer(" 1.2.3.4:8080 ")).toBe("http://1.2.3.4:8080");
     expect(normalizeProxyServer("https://5.6.7.8:443/ ")).toBe("https://5.6.7.8:443");
+    expect(normalizeProxyServer("socks5://127.0.0.1:19050")).toBe("socks5://127.0.0.1:19050");
   });
 
   it("ignores invalid rows and removes duplicates", () => {

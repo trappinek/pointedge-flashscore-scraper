@@ -14,7 +14,7 @@ const CHECK_URLS = ["https://api.country.is/", "https://ifconfig.co/json", "http
 export function normalizeProxyServer(value: string): string | null {
   const trimmed = value.trim().replace(/\/+$/, "");
   if (!trimmed || trimmed.startsWith("#")) return null;
-  const withProtocol = /^[a-z]+:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+  const withProtocol = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
   try {
     const parsed = new URL(withProtocol);
     const explicitPort = withProtocol.match(/:(\d+)(?:\/)?$/)?.[1];

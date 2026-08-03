@@ -9,6 +9,7 @@ import {
   parseRankingHtml,
 } from "./live-parser.js";
 import type { LiveDaySnapshot, LiveMatch } from "./live-types.js";
+import { parseAllOddsRows } from "./odds-parser.js";
 import { ROOT, isMain, writeJsonAtomic } from "./utils.js";
 
 const FLASHSCORE_URL = "https://www.flashscore.pl/tenis/";
@@ -163,6 +164,14 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
       await page.waitForTimeout(500);
     }
     const h2h = parseLiveH2hHtml(await page.content(), match.playerA, match.playerB);
+    const oddsTab = page.getByText(/^(Kursy|Odds)$/i, { exact: true });
+    if (await oddsTab.count()) {
+      await oddsTab.first().click().catch(() => undefined);
+      await page.locator("[data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW'], [data-testid*='bookmaker']").first()
+        .waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
+      await page.waitForTimeout(500);
+    }
+    const odds = parseAllOddsRows(await page.content());
     return {
       ...match,
       playerAPhoto: detail.playerAPhoto,
@@ -171,6 +180,7 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
       playerALastMatches: h2h.playerALastMatches,
       playerBLastMatches: h2h.playerBLastMatches,
       headToHead: h2h.headToHead,
+      odds: odds.length ? odds : match.odds,
     };
   } catch (error) {
     console.warn(

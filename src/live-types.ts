@@ -23,6 +23,13 @@ export interface LiveMatch {
   voided: boolean;
   voidReason: "retirement" | "walkover" | "cancelled" | "postponed" | "abandoned" | null;
   retiredPlayer: "A" | "B" | null;
+  odds: LiveBookmakerOdds[];
+}
+
+export interface LiveBookmakerOdds {
+  bookmaker: string;
+  playerA: number;
+  playerB: number;
 }
 
 export interface LiveDaySnapshot {

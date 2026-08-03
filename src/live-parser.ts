@@ -361,6 +361,7 @@ export function parseLiveDayHtml(
           voided,
           voidReason,
           retiredPlayer,
+          odds: [],
         });
       });
   });

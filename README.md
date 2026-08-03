@@ -143,6 +143,24 @@ Próba lokalna bez zapisu do Neon:
 npm run scrape:live
 ```
 
+### Testowe polskie publiczne proxy
+
+GitHub Actions uruchamia scraper live w trybie `PROXY_MODE=public-pl`. Przed otwarciem
+Flashscore pobiera publiczną listę proxy, sprawdza rzeczywisty kraj adresu wyjściowego
+i wybiera wyłącznie działające proxy z kodem `PL`. Jeżeli żadne nie działa, proces
+kończy się błędem **przed zapisem snapshotu**, dzięki czemu zagraniczne kursy nie
+zastąpią wcześniejszych danych.
+
+Lokalnie można wymusić konkretny serwer:
+
+```powershell
+$env:PROXY_SERVER="http://adres-ip:port"
+npm run scrape:live
+```
+
+Publiczne proxy są niestabilne i rozwiązanie ma charakter testowy. `CRON_SECRET`
+oraz upload do PointEdge nie przechodzą przez proxy — proxy obsługuje tylko Chromium.
+
 Wynik trafia do `data/flashscore-live-cache.json`. Po ustawieniu adresu
 chronionego endpointu PointEdge i tego samego sekretu co w Vercel dane są
 również wysyłane do Neon:

@@ -26,6 +26,10 @@ jobs:
       - run: npm run scrape:live
         env:
           HEADLESS: "1"
+          # Testowo: wybierz działające darmowe proxy i wymagaj polskiego IP.
+          # Jeśli żadne proxy nie działa, scraper kończy się błędem bez nadpisania danych.
+          PROXY_MODE: "public-pl"
+          PUBLIC_PROXY_LIMIT: "48"
           LIVE_REQUIRE_UPLOAD: "1"
           POINTEDGE_INGEST_URL: "https://www.pointedge.pl/api/cron/ingest-flashscore"
           CRON_SECRET: ${{ secrets.CRON_SECRET }}

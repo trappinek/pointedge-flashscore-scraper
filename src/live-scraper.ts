@@ -11,6 +11,7 @@ import {
 import type { LiveDaySnapshot, LiveMatch } from "./live-types.js";
 import { parseAllOddsRows } from "./odds-parser.js";
 import { ROOT, isMain, writeJsonAtomic } from "./utils.js";
+import { resolveBrowserProxy } from "./proxy.js";
 
 const FLASHSCORE_URL = "https://www.flashscore.pl/tenis/";
 const OUTPUT_FILE = path.join(ROOT, "data", "flashscore-live-cache.json");
@@ -235,7 +236,7 @@ async function collectAllBookmakerOdds(page: Page): Promise<LiveMatch["odds"]> {
   let unchangedRounds = 0;
   let previousSize = collected.size;
 
-  for (let attempt = 0; attempt < 6 && unchangedRounds < 2; attempt++) {
+  for (let attempt = 0; attempt < 4 && unchangedRounds < 2; attempt++) {
     const expanders = page
       .locator("button, [role='button']")
       .filter({ hasText: /(?:Poka[zż]|Wy[sś]wietl|Zobacz)?\s*(?:wi[eę]cej|more)|pozosta(?:łe|le)\s+ofert/i });
@@ -249,15 +250,11 @@ async function collectAllBookmakerOdds(page: Page): Promise<LiveMatch["odds"]> {
 
     const bookmakerLinks = page.locator("main a[href*='/bookmaker/'][href*='odds-comparison']");
     const linkCount = await bookmakerLinks.count();
-    for (let index = 0; index < linkCount; index++) {
-      await bookmakerLinks.nth(index).scrollIntoViewIfNeeded().catch(() => undefined);
-      await capture();
+    if (linkCount > 0) {
+      await bookmakerLinks.nth(linkCount - 1).scrollIntoViewIfNeeded().catch(() => undefined);
     }
 
-    await page
-      .evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "auto" }))
-      .catch(() => undefined);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
     await capture();
 
     if (collected.size === previousSize) unchangedRounds++;
@@ -364,7 +361,11 @@ async function upload(days: LiveDaySnapshot[]): Promise<void> {
 }
 
 export async function main(): Promise<void> {
-  const browser = await chromium.launch({ headless: process.env.HEADLESS !== "0" });
+  const proxy = await resolveBrowserProxy();
+  const browser = await chromium.launch({
+    headless: process.env.HEADLESS !== "0",
+    proxy,
+  });
   const context = await browser.newContext({ locale: "pl-PL", timezoneId: "Europe/Warsaw" });
   try {
     const rankings = await scrapeRankings(context);

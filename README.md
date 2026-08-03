@@ -21,21 +21,35 @@ npm run install:browser
 ## Uruchamianie w CMD
 
 ```bat
-set HISTORY_FROM=2024-08-01
-set HISTORY_TO=2026-06-30
-set HISTORY_POOL=1200
-set PREPARE_COUNT=500
+set HISTORY_FROM=2023-01-01
+set HISTORY_TO=2026-07-25
+set HISTORY_POOL=5000
+set PREPARE_COUNT=700
+set MIN_RECORDS_PER_MONTH=15
+set MIN_PREPARED_PER_MONTH=15
 set HEADLESS=0
 set SCRAPE_DELAY_MS=2000
 set MAX_RETRIES=3
-set MIN_ODDS=1.8
+set MIN_ODDS=1.5
 set MAX_ODDS=3.0
-set TARGET_HIT_RATE=60
-set TARGET_YIELD=10
 npm run scrape
+npm run scrape:missing
 npm run prepare
 npm run export-sql
 ```
+
+### Tryby przygotowania danych historycznych
+
+Bez zmiennych `TARGET_HIT_RATE` i `TARGET_YIELD` generator wykonuje transparentny
+backtest jednej reguły przedmeczowej: wybiera niższy dostępny kurs w ustawionym
+zakresie, bez sprawdzania zwycięzcy.
+
+Po ustawieniu obu zmiennych generator tworzy jawnie oznaczony scenariusz
+demonstracyjny `[FLASHSCORE_HISTORY_DEMO_V2]`. Taki scenariusz wykorzystuje znane
+wyniki historyczne, aby osiągnąć zadane parametry, i nie może być przedstawiany
+jako typy opublikowane przed meczami. `MAX_WIN_STREAK` i `MAX_LOSS_STREAK`
+ograniczają długość serii, a `MIN_PREPARED_PER_MONTH` pilnuje pokrycia miesięcy.
+Zwroty pochodzą wyłącznie z rzeczywistego statusu meczu w danych Flashscore.
 
 Test jednego dnia:
 
@@ -49,23 +63,27 @@ npm run scrape
 ## Uruchamianie w PowerShell
 
 ```powershell
-$env:HISTORY_FROM="2024-08-01"
-$env:HISTORY_TO="2026-06-30"
-$env:HISTORY_POOL="1200"
-$env:PREPARE_COUNT="500"
+$env:HISTORY_FROM="2023-01-01"
+$env:HISTORY_TO="2026-07-25"
+$env:HISTORY_POOL="5000"
+$env:PREPARE_COUNT="700"
+$env:MIN_RECORDS_PER_MONTH="15"
+$env:MIN_PREPARED_PER_MONTH="15"
 $env:HEADLESS="0"
 $env:SCRAPE_DELAY_MS="2000"
 $env:MAX_RETRIES="3"
-$env:MIN_ODDS="1.8"
+$env:MIN_ODDS="1.5"
 $env:MAX_ODDS="3.0"
-$env:TARGET_HIT_RATE="60"
-$env:TARGET_YIELD="10"
 npm run scrape
+npm run scrape:missing
 npm run prepare
 npm run export-sql
 ```
 
-`HEADLESS=0` pokazuje przeglądarkę, a `HEADLESS=1` uruchamia ją w tle. `SCRAPE_DELAY_MS` ustala przerwę między meczami, `MAX_RETRIES` ogranicza ponowienia, a `HISTORY_POOL` ustala docelową pulę. `TARGET_HIT_RATE` i `TARGET_YIELD` są wartościami procentowymi. Przy ustawieniach 60 i 10 generator wybiera dokładnie 500 rekordów, około 300 wygranych i 200 przegranych oraz przerywa działanie, jeśli pula nie pozwala osiągnąć celu.
+`HEADLESS=0` pokazuje przeglądarkę, a `HEADLESS=1` uruchamia ją w tle.
+`SCRAPE_DELAY_MS` ustala przerwę między meczami, `MAX_RETRIES` ogranicza
+ponowienia, a `HISTORY_POOL` ustala docelową pulę. `MIN_PREPARED_PER_MONTH`
+wymusza minimalną liczbę rekordów w każdym aktywnym miesiącu.
 
 ### Szybka próba na 5 rekordach
 
@@ -146,6 +164,29 @@ Nieudane pobranie lub CAPTCHA nie czyści istniejącego cache.
 
 Ponowne `npm run scrape` automatycznie wczytuje checkpoint i pomija zapisane ID. Nie usuwaj pliku wejściowego, jeśli chcesz wznowić. Zamknięta karta lub kontekst są odtwarzane, a bieżący mecz ponawiany.
 
+### Uzupełnianie brakujących miesięcy
+
+Po zebraniu głównej puli możesz przeskanować wyłącznie miesiące, w których brakuje
+rekordów. Tryb nie zaczyna od Australian Open i nie duplikuje istniejących meczów:
+
+```bat
+set HISTORY_FROM=2023-01-01
+set HISTORY_TO=2026-07-25
+set MIN_RECORDS_PER_MONTH=15
+set HEADLESS=0
+set SCRAPE_DELAY_MS=2000
+set MAX_RETRIES=3
+npm run scrape:missing
+```
+
+Zakres jest domyślnie wyliczany z najstarszej i najnowszej daty w
+`data/flashscore-atp-wta.json`. Możesz go ograniczyć przez `HISTORY_FROM` i
+`HISTORY_TO`. Tryb korzysta z archiwów turniejowych odpowiadających danemu
+miesiącowi. Każdy znaleziony rekord jest od razu zapisywany, a kolejne
+uruchomienie pomija jego ID, więc bezpiecznie wznawia pracę bez duplikatów.
+Grudzień może pozostać pusty, ponieważ główne cykle ATP i WTA nie rozgrywają
+wtedy regularnych turniejów.
+
 ## Przygotowanie danych i SQL
 
 Po zebraniu co najmniej 650 rekordów:
@@ -155,7 +196,10 @@ npm run prepare
 npm run export-sql
 ```
 
-Dobór jest deterministyczny, przeplata miesiące i toury, usuwa duplikaty i wybiera retrospektywnie stronę zakładu tak, by techniczny yield był możliwie bliski 7%. Kursy ani wyniki nie są zmieniane. Statystyki są drukowane przez `prepare`.
+Dobór jest deterministyczny, usuwa duplikaty i zapewnia minimalne pokrycie
+aktywnych miesięcy. Strona jest wybierana wyłącznie na podstawie kursu
+przedmeczowego, bez odczytywania zwycięzcy. Statystyki są drukowane przez
+`prepare`.
 
 Rekordy historyczne zachowują oryginalną chronologię: `Match.createdAt` i `Tip.createdAt` są ustawiane dokładnie na pełną datę i godzinę meczu z JSON (`date`/`matchDate`). Generator nie używa czasu importu i przerywa pracę, jeżeli data jest niepoprawna albo `createdAt` różni się od daty meczu choćby o sekundę.
 

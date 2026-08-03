@@ -263,12 +263,20 @@ function scoreWinner(
 function parseVoidReason(
   value: string,
 ): LiveMatch["voidReason"] {
-  if (/po krecz|krecz|retired/i.test(value)) return "retirement";
-  if (/walkower/i.test(value)) return "walkover";
-  if (/odwołan/i.test(value)) return "cancelled";
-  if (/przełożon/i.test(value)) return "postponed";
-  if (/anulowan|przerwan|abandoned/i.test(value)) return "abandoned";
+  if (/po krecz|krecz|retired|wycofa|withdrawn/i.test(value)) return "retirement";
+  if (/walkower|walkover/i.test(value)) return "walkover";
+  if (/odwołan|cancelled|canceled/i.test(value)) return "cancelled";
+  // Przerwa (np. przez deszcz) ani przełożenie nie kończą meczu.
+  if (/przełożon|postponed|przerwan|interrupted|suspended|deszcz/i.test(value)) return "postponed";
+  if (/anulowan|abandoned/i.test(value)) return "abandoned";
   return null;
+}
+
+function isRefundableVoidReason(reason: LiveMatch["voidReason"]): boolean {
+  return reason === "retirement" ||
+    reason === "walkover" ||
+    reason === "cancelled" ||
+    reason === "abandoned";
 }
 
 export function parseLiveDayHtml(
@@ -316,8 +324,8 @@ export function parseLiveDayHtml(
         const isLive = element.hasClass("event__match--live");
         const statusLabel = `${stageLabel} ${timeLabel}`;
         const voidReason = parseVoidReason(`${statusLabel} ${rowText}`);
-        const voided = voidReason !== null;
-        const isFinished = /Koniec/i.test(statusLabel) || voided;
+        const voided = isRefundableVoidReason(voidReason);
+        const isFinished = voided || (voidReason !== "postponed" && /Koniec/i.test(statusLabel));
         const status: LiveMatch["status"] = isFinished ? "finished" : isLive ? "live" : "upcoming";
         const scheduledTime = /^\d{2}:\d{2}$/.test(timeLabel) ? timeLabel : "12:00";
         const result = status === "finished" ? parseResult(element) : null;

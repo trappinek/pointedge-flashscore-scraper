@@ -7,6 +7,10 @@ it("escapes SQL and is transactional/idempotent", () => {
   const sql=generateSql(prepare([r],1));
   expect(sql).toContain("BEGIN;"); expect(sql).toContain("COMMIT;"); expect(sql).toContain("ON CONFLICT"); expect(sql).toContain("O''Brien");
   expect(sql).toContain('"updatedAt"');
+  expect(sql).toContain('INSERT INTO "Match"');
+  expect(sql).toContain('INSERT INTO "Tip"');
+  expect(sql).toContain('INSERT INTO "TipOdds"');
+  expect(sql).not.toMatch(/CREATE\s+TABLE/i);
   expect(sql).not.toContain("NOW()");
   expect(sql.match(/'2025-01-01T12:00:00Z'::timestamptz/g)).toHaveLength(4);
 });

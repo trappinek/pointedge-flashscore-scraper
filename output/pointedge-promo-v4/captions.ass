@@ -1,0 +1,27 @@
+﻿[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Caption,Bahnschrift,58,&H00FFFFFF,&H0000D9F7,&HE0000710,&H00000000,-1,0,0,0,100,100,0.5,0,1,6,2,2,72,220,285,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 8,0:00:00.00,0:00:02.24,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}RANKING nie mówi Ci,\Nkto dzisiaj zagra lepiej.
+Dialogue: 8,0:00:02.68,0:00:04.90,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}I właśnie dlatego\Npowstał {\c&H00D9F7&}POINTEDGE{\c&HFFFFFF&}.
+Dialogue: 8,0:00:05.38,0:00:09.60,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}To miejsce porządkuje\Nnajważniejsze informacje\Nprzed meczem tenisowym.
+Dialogue: 8,0:00:10.22,0:00:12.34,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}NAWIERZCHNIA  •  ETAP TURNIEJU
+Dialogue: 8,0:00:12.62,0:00:16.46,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}OSTATNIE SPOTKANIA  •  H2H\NSTYL ZAWODNIKÓW
+Dialogue: 8,0:00:17.14,0:00:20.06,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}Wszystko w jednej,\N{\c&H00D9F7&}CZYTELNEJ ANALIZIE{\c&HFFFFFF&}.
+Dialogue: 8,0:00:20.74,0:00:24.36,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}Mecze {\c&H00D9F7&}ATP I WTA{\c&HFFFFFF&}.
+Dialogue: 8,0:00:25.12,0:00:28.84,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}Konkretne argumenty\Ni historia wcześniejszych analiz.
+Dialogue: 8,0:00:28.84,0:00:32.18,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}Wyniki {\c&H00D9F7&}NIE ZNIKAJĄ{\c&HFFFFFF&}\Npo zakończeniu spotkania.
+Dialogue: 8,0:00:32.86,0:00:34.84,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}Pozostają w\N{\c&H00D9F7&}PUBLICZNYCH STATYSTYKACH{\c&HFFFFFF&}.
+Dialogue: 8,0:00:35.08,0:00:37.86,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}Możesz samodzielnie\Nocenić ich jakość.
+Dialogue: 8,0:00:38.50,0:00:42.68,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}Co {\c&H00D9F7&}72 GODZINY{\c&HFFFFFF&}\Npełna analiza publicznie.
+Dialogue: 8,0:00:43.68,0:00:47.10,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}POINTEDGE.\NMniej szumu. {\c&H00D9F7&}Więcej kontekstu{\c&HFFFFFF&}.
+Dialogue: 8,0:00:47.84,0:00:52.20,Caption,,0,0,0,,{\an2\pos(440,1580)\fad(70,90)\fscx94\fscy94\t(0,120,\fscx100\fscy100)}Wejdź na {\c&H00D9F7&}POINTEDGE.PL{\c&HFFFFFF&}\Ni zobacz aktualną analizę.

@@ -3,6 +3,13 @@ export type Bookmaker = (typeof BOOKMAKERS)[number];
 export type Tour = "ATP" | "WTA";
 export type Surface = "hard" | "clay" | "grass";
 export type Side = "home" | "away";
+export type MatchOutcome =
+  | "completed"
+  | "retirement"
+  | "walkover"
+  | "cancelled"
+  | "postponed"
+  | "abandoned";
 
 export interface Price { bookmaker: Bookmaker; value: number }
 export interface MatchRecord {
@@ -15,14 +22,15 @@ export interface MatchRecord {
   surface: Surface;
   playerA: string;
   playerB: string;
-  winner: Side;
+  winner: Side | null;
+  outcome?: MatchOutcome;
   resultSummary: string;
   odds: { home: Price; away: Price };
 }
 export interface PreparedRecord extends MatchRecord {
   createdAt: string;
   pick: Side;
-  status: "won" | "lost";
+  status: "won" | "lost" | "refunded";
   selectedOdds: Price;
   reasoning: string;
 }

@@ -1,0 +1,80 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Brand,Bahnschrift,34,&H00FFFFFF,&H00FFD900,&H00100603,&H00000000,-1,0,0,0,100,100,5,0,1,2,3,8,120,225,285,1
+Style: Hero,Bahnschrift,88,&H00FFFFFF,&H00FFD900,&H00100603,&H00000000,-1,0,0,0,100,100,0,0,1,4,5,5,120,225,0,1
+Style: HeroCyan,Bahnschrift,104,&H00FFD900,&H00FFFFFF,&H00100603,&H00000000,-1,0,0,0,100,100,0,0,1,4,6,5,120,225,0,1
+Style: Section,Bahnschrift,72,&H00FFFFFF,&H00FFD900,&H00100603,&H00000000,-1,0,0,0,100,100,0,0,1,4,5,5,120,225,0,1
+Style: Accent,Bahnschrift,43,&H00FFD900,&H00FFFFFF,&H00100603,&H00000000,-1,0,0,0,100,100,2,0,1,3,4,5,130,235,0,1
+Style: Chip,Bahnschrift,34,&H00FFFFFF,&H00FFD900,&H00100603,&H00000000,-1,0,0,0,100,100,1,0,1,3,3,5,130,235,0,1
+Style: Metric,Bahnschrift,36,&H00FFFFFF,&H00FFD900,&H00100603,&H00000000,-1,0,0,0,100,100,1,0,1,3,4,5,140,240,0,1
+Style: Caption,Segoe UI,44,&H00FFFFFF,&H00FFD900,&H00100603,&H00000000,-1,0,0,0,100,100,0,0,1,4,3,2,125,245,535,1
+Style: Ghost,Impact,280,&H00FFD900,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1
+Style: Line,Bahnschrift,36,&H00FFD900,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1
+Style: Tiny,Bahnschrift,25,&H00FFFFFF,&H00FFD900,&H00100603,&H00000000,-1,0,0,0,100,100,2,0,1,2,2,5,0,0,0,1
+Style: Cta,Bahnschrift,79,&H00FFFFFF,&H00FFD900,&H00100603,&H00000000,-1,0,0,0,100,100,0,0,1,4,6,5,120,225,0,1
+Style: Domain,Bahnschrift,78,&H00FFD900,&H00FFFFFF,&H00100603,&H00000000,-1,0,0,0,100,100,1,0,1,4,7,5,120,225,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+
+Dialogue: 7,0:00:00.00,0:01:01.20,Brand,,0,0,0,,{\fad(500,350)}POINTEDGE  •  TENIS  •  DANE
+Dialogue: 1,0:00:00.00,0:01:01.20,Line,,0,0,0,,{\an5\move(-220,226,1190,226,0,61200)\alpha&H55&}━━━━━━━━
+
+Dialogue: 0,0:00:00.10,0:00:09.17,Ghost,,0,0,0,,{\pos(850,710)\alpha&HD8&\fscx55\fscy55\t(0,1400,\fscx105\fscy105\alpha&HE8&)\frz-12\t(0,1800,\frz0)\fad(200,350)}03
+Dialogue: 4,0:00:00.10,0:00:03.57,Hero,,0,0,0,,{\move(-360,500,540,500,0,650)\fad(80,180)}RANKING
+Dialogue: 4,0:00:00.35,0:00:03.57,Hero,,0,0,0,,{\move(1410,610,540,610,0,720)\fad(80,180)}TO DOPIERO
+Dialogue: 5,0:00:00.70,0:00:03.57,HeroCyan,,0,0,0,,{\pos(540,735)\fad(100,200)\fscx25\fscy25\t(0,380,\fscx118\fscy118)\t(380,600,\fscx100\fscy100)}POCZĄTEK
+Dialogue: 4,0:00:03.52,0:00:09.17,Accent,,0,0,0,,{\move(540,890,540,800,0,480)\fad(150,250)\frz-5\t(0,450,\frz0)}3 SYGNAŁY, KTÓRE ZMIENIAJĄ MECZ
+Dialogue: 6,0:00:00.10,0:00:03.57,Caption,,0,0,0,,{\fad(130,140)}Ranking ATP lub WTA\N{\c&H00FFD900&}to dopiero początek.
+Dialogue: 6,0:00:03.52,0:00:09.17,Caption,,0,0,0,,{\fad(140,200)}Chcesz lepiej rozumieć mecz?\NSprawdź {\c&H00FFD900&}3 sygnały,\N{\c&H00FFFFFF&}które łatwo przeoczyć.
+
+Dialogue: 0,0:00:09.17,0:00:23.44,Ghost,,0,0,0,,{\pos(170,610)\alpha&HD8&\fscx35\fscy35\t(0,700,\fscx100\fscy100\alpha&HE4&)\fad(150,280)}01
+Dialogue: 4,0:00:09.17,0:00:12.32,HeroCyan,,0,0,0,,{\move(-300,500,420,500,0,520)\fad(80,180)}ELO
+Dialogue: 4,0:00:09.35,0:00:12.32,Section,,0,0,0,,{\move(1430,620,555,620,0,620)\fad(80,180)}NA NAWIERZCHNI
+Dialogue: 4,0:00:12.32,0:00:18.16,Chip,,0,0,0,,{\pos(285,790)\fad(120,200)\fscx20\fscy20\t(0,330,\fscx108\fscy108)\t(330,480,\fscx100\fscy100)}MĄCZKA
+Dialogue: 4,0:00:12.58,0:00:18.16,Chip,,0,0,0,,{\pos(540,790)\fad(120,200)\fscx20\fscy20\t(0,330,\fscx108\fscy108)\t(330,480,\fscx100\fscy100)}TRAWA
+Dialogue: 4,0:00:12.84,0:00:18.16,Chip,,0,0,0,,{\pos(785,790)\fad(120,200)\fscx20\fscy20\t(0,330,\fscx108\fscy108)\t(330,480,\fscx100\fscy100)}HARD
+Dialogue: 3,0:00:18.16,0:00:23.44,Metric,,0,0,0,,{\move(540,900,540,805,0,420)\fad(150,220)}SIŁA W KONKRETNYCH WARUNKACH
+Dialogue: 3,0:00:18.45,0:00:23.44,Accent,,0,0,0,,{\pos(540,890)\fad(150,220)\fscx85\fscy85\t(0,400,\fscx100\fscy100)}+ ŚWIEŻOŚĆ WYNIKÓW
+Dialogue: 6,0:00:09.17,0:00:12.32,Caption,,0,0,0,,{\fad(130,140)}Po pierwsze:\N{\c&H00FFD900&}ELO na nawierzchni.
+Dialogue: 6,0:00:12.32,0:00:18.16,Caption,,0,0,0,,{\fad(130,140)}Ranking łączy cały sezon.\NZawodnik może być mocniejszy\N{\c&H00FFD900&}na mączce niż na trawie.
+Dialogue: 6,0:00:18.16,0:00:23.44,Caption,,0,0,0,,{\fad(130,190)}ELO pokazuje poziom\N{\c&H00FFD900&}w konkretnych warunkach\N{\c&H00FFFFFF&}i świeżość wyników.
+
+Dialogue: 0,0:00:23.44,0:00:38.54,Ghost,,0,0,0,,{\pos(875,625)\alpha&HD8&\fscx35\fscy35\t(0,700,\fscx100\fscy100\alpha&HE4&)\fad(150,280)}02
+Dialogue: 4,0:00:23.44,0:00:27.41,Section,,0,0,0,,{\move(-620,510,540,510,0,600)\fad(80,200)}PATRZ NA
+Dialogue: 5,0:00:23.65,0:00:27.41,HeroCyan,,0,0,0,,{\move(1550,645,540,645,0,650)\fad(80,200)}OBCIĄŻENIE
+Dialogue: 4,0:00:27.41,0:00:32.83,Chip,,0,0,0,,{\move(100,790,285,790,0,360)\fad(120,190)}CZAS
+Dialogue: 4,0:00:27.66,0:00:32.83,Chip,,0,0,0,,{\move(540,880,540,790,0,360)\fad(120,190)}SETY
+Dialogue: 4,0:00:27.91,0:00:32.83,Chip,,0,0,0,,{\move(980,790,785,790,0,360)\fad(120,190)}PRZERWA
+Dialogue: 3,0:00:32.83,0:00:38.54,Metric,,0,0,0,,{\pos(540,795)\fad(160,220)\fscx20\fscy20\t(0,370,\fscx112\fscy112)\t(370,540,\fscx100\fscy100)}TEN SAM WYNIK
+Dialogue: 3,0:00:33.15,0:00:38.54,Accent,,0,0,0,,{\pos(540,885)\fad(160,220)}INNY KOSZT ENERGII
+Dialogue: 6,0:00:23.44,0:00:27.41,Caption,,0,0,0,,{\fad(130,140)}Po drugie:\N{\c&H00FFD900&}obciążenie zawodnika.
+Dialogue: 6,0:00:27.41,0:00:32.83,Caption,,0,0,0,,{\fad(130,140)}Sprawdź czas na korcie,\Ndługie sety i przerwy\N{\c&H00FFD900&}między spotkaniami.
+Dialogue: 6,0:00:32.83,0:00:38.54,Caption,,0,0,0,,{\fad(130,190)}Dwie wygrane mogą wyglądać tak samo,\Nale kosztować zawodnika\N{\c&H00FFD900&}zupełnie inną ilość energii.
+
+Dialogue: 0,0:00:38.54,0:00:52.92,Ghost,,0,0,0,,{\pos(170,620)\alpha&HD8&\fscx35\fscy35\t(0,700,\fscx100\fscy100\alpha&HE4&)\fad(150,280)}03
+Dialogue: 4,0:00:38.54,0:00:41.52,Section,,0,0,0,,{\move(-500,520,540,520,0,560)\fad(80,180)}DRUGI
+Dialogue: 5,0:00:38.75,0:00:41.52,HeroCyan,,0,0,0,,{\move(1450,655,540,655,0,620)\fad(80,180)}SERWIS
+Dialogue: 4,0:00:41.52,0:00:46.77,Accent,,0,0,0,,{\pos(540,790)\fad(150,200)\fscx30\fscy30\t(0,330,\fscx118\fscy118)\t(330,520,\fscx100\fscy100)}TEST GRY POD PRESJĄ
+Dialogue: 3,0:00:46.77,0:00:52.92,Metric,,0,0,0,,{\move(540,930,540,795,0,420)\fad(150,220)}SŁABSZY WSKAŹNIK
+Dialogue: 3,0:00:47.08,0:00:52.92,Accent,,0,0,0,,{\pos(540,890)\fad(150,220)}WIĘCEJ OKAZJI DO RETURNU
+Dialogue: 6,0:00:38.54,0:00:41.52,Caption,,0,0,0,,{\fad(130,140)}Po trzecie:\N{\c&H00FFD900&}punkty po drugim serwisie.
+Dialogue: 6,0:00:41.52,0:00:46.77,Caption,,0,0,0,,{\fad(130,140)}Asy przyciągają uwagę,\Nale drugi serwis pokazuje,\N{\c&H00FFD900&}co dzieje się pod presją.
+Dialogue: 6,0:00:46.77,0:00:52.92,Caption,,0,0,0,,{\fad(130,190)}Gdy wskaźnik spada,\Nrywal dostaje więcej okazji\N{\c&H00FFD900&}do agresywnego returnu.
+
+Dialogue: 4,0:00:52.92,0:00:55.06,Cta,,0,0,0,,{\move(-650,520,540,520,0,620)\fad(80,180)}SAM WYNIK
+Dialogue: 4,0:00:53.10,0:00:55.06,Cta,,0,0,0,,{\move(1550,655,540,655,0,650)\fad(80,180)}TO ZA MAŁO
+Dialogue: 5,0:00:55.06,0:00:57.04,Accent,,0,0,0,,{\pos(540,650)\fad(130,190)\fscx35\fscy35\t(0,350,\fscx118\fscy118)\t(350,560,\fscx100\fscy100)}LICZY SIĘ KONTEKST
+Dialogue: 3,0:00:57.04,0:01:01.20,Domain,,0,0,0,,{\pos(540,650)\alpha&H99&\blur8\bord10\fad(180,400)\fscx80\fscy80\t(0,500,\fscx110\fscy110)\t(500,750,\fscx100\fscy100)}POINTEDGE.PL
+Dialogue: 5,0:00:57.04,0:01:01.20,Domain,,0,0,0,,{\pos(540,650)\fad(180,400)\fscx80\fscy80\t(0,500,\fscx110\fscy110)\t(500,750,\fscx100\fscy100)}POINTEDGE.PL
+Dialogue: 6,0:00:52.92,0:00:55.06,Caption,,0,0,0,,{\fad(130,140)}Sam wynik\N{\c&H00FFD900&}to za mało.
+Dialogue: 6,0:00:55.06,0:00:57.04,Caption,,0,0,0,,{\fad(130,140)}Liczy się\N{\c&H00FFD900&}kontekst.
+Dialogue: 6,0:00:57.04,0:01:01.20,Caption,,0,0,0,,{\fad(150,400)}Więcej tenisowych ciekawostek\Nznajdziesz na {\c&H00FFD900&}pointedge.pl
+

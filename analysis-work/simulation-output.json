@@ -1,0 +1,28 @@
+﻿{
+  "n": 506,
+  "p": 0.5632411067193676,
+  "maxWin": {
+    "p05": 7,
+    "p50": 10,
+    "p95": 14,
+    "p99": 17,
+    "mean": 9.9227
+  },
+  "maxLoss": {
+    "p05": 5,
+    "p50": 7,
+    "p95": 10,
+    "p99": 12,
+    "mean": 7.02914
+  },
+  "transitions": {
+    "p05": 230,
+    "p50": 248,
+    "p95": 267,
+    "p99": 275,
+    "mean": 248.42206
+  },
+  "probabilityMaxWinAtLeast39": 0,
+  "probabilityMaxLossAtLeast11": 0.03078,
+  "probabilityTransitionsAtMost169": 0
+}

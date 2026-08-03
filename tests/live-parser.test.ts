@@ -138,6 +138,54 @@ describe("live Flashscore parser", () => {
     });
   });
 
+  it("does not void or finish a match temporarily interrupted by rain", () => {
+    const interrupted = parseLiveDayHtml(
+      `<div class="sportName tennis">
+        <div class="headerLeague__wrapper">
+          <span class="headerLeague__category-text">ATP - SINGIEL</span>
+          <a class="headerLeague__title" title="Waszyngton (USA), twarda"></a>
+        </div>
+        <div id="g_2_RAIN0001" data-event-row="true">
+          <div class="event__stage">Przerwany - deszcz</div>
+          <div class="event__participant event__participant--home">Gracz A.</div>
+          <div class="event__participant event__participant--away">Gracz B.</div>
+        </div>
+      </div>`,
+      "2026-07-26",
+    )[0];
+
+    expect(interrupted).toMatchObject({
+      status: "upcoming",
+      winner: null,
+      voided: false,
+      voidReason: "postponed",
+    });
+  });
+
+  it("keeps a definitively cancelled match refundable", () => {
+    const cancelled = parseLiveDayHtml(
+      `<div class="sportName tennis">
+        <div class="headerLeague__wrapper">
+          <span class="headerLeague__category-text">WTA - SINGIEL</span>
+          <a class="headerLeague__title" title="Praga (Czechy), ziemna"></a>
+        </div>
+        <div id="g_2_CANCEL01" data-event-row="true">
+          <div class="event__stage">Mecz odwołany</div>
+          <div class="event__participant event__participant--home">Gracz A.</div>
+          <div class="event__participant event__participant--away">Gracz B.</div>
+        </div>
+      </div>`,
+      "2026-07-26",
+    )[0];
+
+    expect(cancelled).toMatchObject({
+      status: "finished",
+      winner: null,
+      voided: true,
+      voidReason: "cancelled",
+    });
+  });
+
   it("preserves the Warsaw local hour in winter and summer", () => {
     expect(warsawDateTimeToIso("2025-01-16", "06:25")).toBe("2025-01-16T05:25:00.000Z");
     expect(warsawDateTimeToIso("2026-07-26", "18:30")).toBe("2026-07-26T16:30:00.000Z");

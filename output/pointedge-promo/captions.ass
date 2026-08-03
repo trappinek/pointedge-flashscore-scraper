@@ -1,0 +1,28 @@
+﻿[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Caption,Bahnschrift,54,&H00FFFFFF,&H0000D9F7,&HCC00101A,&H00000000,-1,0,0,0,100,100,1.0,0,1,5,0,2,85,215,385,1
+Style: Scene,Bahnschrift,30,&H0000D9F7,&H0000D9F7,&HCC00101A,&H00000000,-1,0,0,0,100,100,3.2,0,1,3,0,7,72,72,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 5,0:00:00.05,0:00:02.85,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}RANKING nie mówi Ci,
+Dialogue: 5,0:00:02.85,0:00:05.70,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}kto DZISIAJ zagra lepiej.
+Dialogue: 5,0:00:05.70,0:00:09.95,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}I właśnie dlatego powstał\N{\c&H00D9F7&}POINTEDGE{\c&HFFFFFF&}.
+Dialogue: 5,0:00:09.95,0:00:13.45,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}Porządkujemy najważniejsze\Ninformacje
+Dialogue: 5,0:00:13.45,0:00:17.05,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}przed każdym MECZEM TENISOWYM.
+Dialogue: 5,0:00:17.05,0:00:20.10,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}NAWIERZCHNIA  •  ETAP TURNIEJU
+Dialogue: 5,0:00:20.10,0:00:23.45,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}OSTATNIE MECZE  •  H2H
+Dialogue: 5,0:00:23.45,0:00:28.80,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}Cały kontekst w jednej,\NCZYTELNEJ ANALIZIE.
+Dialogue: 5,0:00:28.80,0:00:32.25,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}Mecze ATP i WTA\Noraz konkretne argumenty.
+Dialogue: 5,0:00:32.25,0:00:35.95,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}Do tego historia\Nwcześniejszych analiz.
+Dialogue: 5,0:00:35.95,0:00:39.85,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}Wyniki NIE ZNIKAJĄ\Npo zakończeniu meczu.
+Dialogue: 5,0:00:39.85,0:00:43.85,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}Zostają w PUBLICZNYCH\NSTATYSTYKACH.
+Dialogue: 5,0:00:43.85,0:00:46.45,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}Pełna analiza publicznie\Nco 72 GODZINY.
+Dialogue: 5,0:00:46.45,0:00:48.72,Caption,,0,0,0,,{\an2\pos(430,1510)\fad(130,130)\fscx94\fscy94\t(0,180,\fscx100\fscy100)}{\c&H00D9F7&}POINTEDGE.PL{\c&HFFFFFF&}

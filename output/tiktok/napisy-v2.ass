@@ -1,0 +1,60 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Brand,Arial,36,&H00FFFFFF,&H00FFD900,&H00101820,&H90000000,-1,0,0,0,100,100,4,0,3,1,0,8,130,230,285,1
+Style: Counter,Arial,34,&H00FFD900,&H00FFFFFF,&H00101820,&H90000000,-1,0,0,0,100,100,2,0,3,1,0,8,130,230,385,1
+Style: Headline,Arial,67,&H00FFFFFF,&H00FFD900,&H00101820,&HA0000000,-1,0,0,0,100,100,0,0,3,2,0,8,130,230,450,1
+Style: Accent,Arial,41,&H00FFD900,&H00FFFFFF,&H00101820,&H90000000,-1,0,0,0,100,100,1,0,3,1,0,8,135,235,650,1
+Style: Card,Arial,34,&H00FFFFFF,&H00FFD900,&H00101820,&HB5000000,-1,0,0,0,100,100,1,0,3,1,0,8,155,255,780,1
+Style: Caption,Arial,42,&H00FFFFFF,&H00FFD900,&H00101820,&HC0000000,-1,0,0,0,100,100,0,0,3,2,0,2,130,240,535,1
+Style: Cta,Arial,73,&H00FFFFFF,&H00FFD900,&H00101820,&HA8000000,-1,0,0,0,100,100,0,0,3,2,0,8,130,230,455,1
+Style: Domain,Arial,64,&H00FFD900,&H00FFFFFF,&H00101820,&HB0000000,-1,0,0,0,100,100,1,0,3,2,0,8,130,230,720,1
+Style: Footer,Arial,27,&H00FFD900,&H00FFFFFF,&H00101820,&H90000000,-1,0,0,0,100,100,2,0,3,1,0,2,130,240,385,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:01:01.20,Brand,,0,0,0,,{\fad(350,350)}POINTEDGE  •  TENIS  •  DANE
+Dialogue: 0,0:00:00.00,0:01:01.20,Footer,,0,0,0,,{\fad(350,350)}ANALIZUJ KONTEKST  •  POINTEDGE.PL
+
+Dialogue: 2,0:00:00.10,0:00:09.17,Counter,,0,0,0,,{\fad(220,220)\fscx86\fscy86\t(0,450,\fscx100\fscy100)}NIE TYLKO RANKING
+Dialogue: 3,0:00:00.10,0:00:09.17,Headline,,0,0,0,,{\fad(260,240)\move(570,480,540,480,0,500)}RANKING TO\NDOPIERO START
+Dialogue: 3,0:00:03.52,0:00:09.17,Accent,,0,0,0,,{\fad(220,220)\fscx92\fscy92\t(0,380,\fscx100\fscy100)}3 SYGNAŁY, KTÓRE ZMIENIAJĄ OBRAZ MECZU
+Dialogue: 4,0:00:00.10,0:00:03.57,Caption,,0,0,0,,{\fad(160,150)}Ranking ATP lub WTA\Nto dopiero początek.
+Dialogue: 4,0:00:03.52,0:00:09.17,Caption,,0,0,0,,{\fad(160,180)}Sprawdź trzy sygnały,\Nktóre często umykają\Nna pierwszy rzut oka.
+
+Dialogue: 2,0:00:09.17,0:00:23.44,Counter,,0,0,0,,{\fad(220,220)\fscx80\fscy80\t(0,420,\fscx100\fscy100)}01 / 03
+Dialogue: 3,0:00:09.17,0:00:23.44,Headline,,0,0,0,,{\fad(240,220)\move(575,480,540,480,0,480)}ELO NA\NNAWIERZCHNI
+Dialogue: 3,0:00:12.32,0:00:23.44,Accent,,0,0,0,,{\fad(200,220)}MĄCZKA  ≠  TRAWA  ≠  HARD
+Dialogue: 3,0:00:18.16,0:00:23.44,Card,,0,0,0,,{\fad(220,220)\fscx92\fscy92\t(0,360,\fscx100\fscy100)}SIŁA W KONKRETNYCH WARUNKACH\N+ ŚWIEŻOŚĆ WYNIKÓW
+Dialogue: 4,0:00:09.17,0:00:12.32,Caption,,0,0,0,,{\fad(150,150)}Po pierwsze: ELO\Nna konkretnej nawierzchni.
+Dialogue: 4,0:00:12.32,0:00:18.16,Caption,,0,0,0,,{\fad(150,150)}Zwykły ranking łączy cały sezon,\Na zawodnik może być znacznie mocniejszy\Nna mączce niż na trawie.
+Dialogue: 4,0:00:18.16,0:00:23.44,Caption,,0,0,0,,{\fad(150,180)}ELO pokazuje poziom właśnie\Nw tych warunkach oraz to,\Njak świeże są wyniki.
+
+Dialogue: 2,0:00:23.44,0:00:38.54,Counter,,0,0,0,,{\fad(220,220)\fscx80\fscy80\t(0,420,\fscx100\fscy100)}02 / 03
+Dialogue: 3,0:00:23.44,0:00:38.54,Headline,,0,0,0,,{\fad(240,220)\move(575,480,540,480,0,480)}PATRZ NA\NOBCIĄŻENIE
+Dialogue: 3,0:00:27.41,0:00:38.54,Accent,,0,0,0,,{\fad(200,220)}CZAS  •  SETY  •  PRZERWA
+Dialogue: 3,0:00:32.83,0:00:38.54,Card,,0,0,0,,{\fad(220,220)\fscx92\fscy92\t(0,360,\fscx100\fscy100)}TEN SAM WYNIK\NINNY KOSZT ENERGII
+Dialogue: 4,0:00:23.44,0:00:27.41,Caption,,0,0,0,,{\fad(150,150)}Po drugie: obciążenie,\Na nie tylko ostatni rezultat.
+Dialogue: 4,0:00:27.41,0:00:32.83,Caption,,0,0,0,,{\fad(150,150)}Sprawdź czas na korcie,\Ndługie sety oraz przerwy\Nmiędzy spotkaniami.
+Dialogue: 4,0:00:32.83,0:00:38.54,Caption,,0,0,0,,{\fad(150,180)}Dwie wygrane mogą wyglądać tak samo,\Nchoć jedna kosztowała prawie\Ndwa razy więcej energii.
+
+Dialogue: 2,0:00:38.54,0:00:52.92,Counter,,0,0,0,,{\fad(220,220)\fscx80\fscy80\t(0,420,\fscx100\fscy100)}03 / 03
+Dialogue: 3,0:00:38.54,0:00:52.92,Headline,,0,0,0,,{\fad(240,220)\move(575,480,540,480,0,480)}DRUGI\NSERWIS
+Dialogue: 3,0:00:41.52,0:00:52.92,Accent,,0,0,0,,{\fad(200,220)}TEST GRY POD PRESJĄ
+Dialogue: 3,0:00:46.77,0:00:52.92,Card,,0,0,0,,{\fad(220,220)\fscx92\fscy92\t(0,360,\fscx100\fscy100)}SŁABSZY WSKAŹNIK\NWIĘCEJ OKAZJI DO RETURNU
+Dialogue: 4,0:00:38.54,0:00:41.52,Caption,,0,0,0,,{\fad(150,150)}Po trzecie: punkty\Npo drugim serwisie.
+Dialogue: 4,0:00:41.52,0:00:46.77,Caption,,0,0,0,,{\fad(150,150)}Asy przyciągają uwagę,\Nale drugi serwis pokazuje,\Nco dzieje się pod presją.
+Dialogue: 4,0:00:46.77,0:00:52.92,Caption,,0,0,0,,{\fad(150,180)}Gdy wskaźnik spada,\Nrywal dostaje więcej okazji\Ndo agresywnego returnu.
+
+Dialogue: 2,0:00:52.92,0:00:57.04,Cta,,0,0,0,,{\fad(260,220)\fscx88\fscy88\t(0,480,\fscx100\fscy100)}SAM WYNIK\NTO ZA MAŁO
+Dialogue: 3,0:00:55.06,0:01:01.20,Accent,,0,0,0,,{\fad(220,320)}LICZY SIĘ KONTEKST
+Dialogue: 4,0:00:52.92,0:00:55.06,Caption,,0,0,0,,{\fad(150,150)}Sam wynik to za mało.
+Dialogue: 4,0:00:55.06,0:00:57.04,Caption,,0,0,0,,{\fad(150,150)}Liczy się kontekst.
+Dialogue: 3,0:00:57.04,0:01:01.20,Domain,,0,0,0,,{\fad(260,400)\fscx86\fscy86\t(0,500,\fscx100\fscy100)}POINTEDGE.PL
+Dialogue: 4,0:00:57.04,0:01:01.20,Caption,,0,0,0,,{\fad(170,400)}Więcej tenisowych ciekawostek\Nznajdziesz na pointedge.pl.

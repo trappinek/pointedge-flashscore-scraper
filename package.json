@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "scrape": "tsx src/scraper.ts",
+    "scrape:missing": "tsx src/missing-months.ts",
     "scrape:live": "tsx src/live-scraper.ts",
     "prepare": "tsx src/prepare.ts",
     "export-sql": "tsx src/export-sql.ts",

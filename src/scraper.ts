@@ -7,7 +7,7 @@ import { parseOddsRows } from "./odds-parser.js";
 import type { Candidate, MatchRecord } from "./types.js";
 import { DATA_FILE, ROOT, envInt, isMain, logError, readJson, slugId, writeJsonAtomic } from "./utils.js";
 
-class ResilientBrowser {
+export class ResilientBrowser {
   browser?: Browser; context?: BrowserContext; page?: Page;
   async getPage(): Promise<Page> {
     if (!this.browser?.isConnected()) this.browser = await chromium.launch({ headless: process.env.HEADLESS === "1" });
@@ -63,7 +63,7 @@ export async function scrapeCandidate(manager: ResilientBrowser, candidate: Cand
 }
 
 export async function main(): Promise<void> {
-  const from = process.env.HISTORY_FROM ?? "2024-08-01", to = process.env.HISTORY_TO ?? "2026-06-30";
+  const from = process.env.HISTORY_FROM ?? "2023-01-01", to = process.env.HISTORY_TO ?? "2026-07-25";
   const pool = envInt("HISTORY_POOL", 900), retries = Math.max(1, envInt("MAX_RETRIES", 3)), wait = envInt("SCRAPE_DELAY_MS", 2000);
   const records = readJson<MatchRecord[]>(DATA_FILE, []), seen = new Set(records.map(x => x.flashscoreId));
   const manager = new ResilientBrowser();

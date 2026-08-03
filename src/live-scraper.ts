@@ -187,13 +187,7 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
       await oddsRows.first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
     }
 
-    // Flashscore domyslnie zwija czesc polskich operatorow pod przyciskiem „Wiecej”.
-    const moreBookmakers = page.getByRole("button", { name: /^(Więcej|Wiecej|More)$/i });
-    if (await moreBookmakers.count()) {
-      await moreBookmakers.first().click().catch(() => undefined);
-      await page.waitForTimeout(350);
-    }
-    const odds = parseAllOddsRows(await page.content());
+    const odds = await collectAllBookmakerOdds(page);
 
     const h2hTab = page.getByText("H2H", { exact: true });
     if (await h2hTab.count()) {
@@ -224,6 +218,56 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
   }
 }
 
+/**
+ * Flashscore lazy-loaduje tabele kursow i na runnerze GitHub potrafi najpierw
+ * wyrenderowac tylko jeden wiersz. Zbieramy oferty z kilku stanow strony,
+ * rozwijamy przyciski "wiecej" i scalamy wiersze po nazwie bukmachera.
+ */
+async function collectAllBookmakerOdds(page: Page): Promise<LiveMatch["odds"]> {
+  const collected = new Map<string, LiveMatch["odds"][number]>();
+  const capture = async () => {
+    for (const row of parseAllOddsRows(await page.content())) {
+      collected.set(row.bookmaker.toLocaleLowerCase("pl"), row);
+    }
+  };
+
+  await capture();
+  let unchangedRounds = 0;
+  let previousSize = collected.size;
+
+  for (let attempt = 0; attempt < 6 && unchangedRounds < 2; attempt++) {
+    const expanders = page
+      .locator("button, [role='button']")
+      .filter({ hasText: /(?:Poka[zż]|Wy[sś]wietl|Zobacz)?\s*(?:wi[eę]cej|more)|pozosta(?:łe|le)\s+ofert/i });
+    const expanderCount = await expanders.count();
+    for (let index = 0; index < expanderCount; index++) {
+      const expander = expanders.nth(index);
+      if (await expander.isVisible().catch(() => false)) {
+        await expander.click().catch(() => undefined);
+      }
+    }
+
+    const bookmakerLinks = page.locator("main a[href*='/bookmaker/'][href*='odds-comparison']");
+    const linkCount = await bookmakerLinks.count();
+    for (let index = 0; index < linkCount; index++) {
+      await bookmakerLinks.nth(index).scrollIntoViewIfNeeded().catch(() => undefined);
+      await capture();
+    }
+
+    await page
+      .evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "auto" }))
+      .catch(() => undefined);
+    await page.waitForTimeout(500);
+    await capture();
+
+    if (collected.size === previousSize) unchangedRounds++;
+    else unchangedRounds = 0;
+    previousSize = collected.size;
+  }
+
+  return [...collected.values()];
+}
+
 async function enrichDays(context: BrowserContext, days: LiveDaySnapshot[]): Promise<LiveDaySnapshot[]> {
   const queue = days.flatMap((day, dayIndex) =>
     day.matches.map((match, matchIndex) => ({ dayIndex, matchIndex, match })),
@@ -246,8 +290,14 @@ async function enrichDays(context: BrowserContext, days: LiveDaySnapshot[]): Pro
   const withOdds = enriched.flatMap((day) => day.matches).filter(
     (match) => match.odds.length > 0,
   ).length;
+  const oddsMatches = enriched.flatMap((day) => day.matches).filter((match) => match.odds.length > 0);
+  const withMultipleBookmakers = oddsMatches.filter((match) => match.odds.length > 1).length;
+  const totalBookmakerOffers = oddsMatches.reduce((sum, match) => sum + match.odds.length, 0);
   console.log(`Szczegóły meczów: zdjęcia ${withPhotos}/${queue.length}, dokładna runda ${withSpecificRound}/${queue.length}`);
   console.log(`Kursy bukmacherow: ${withOdds}/${queue.length} meczow`);
+  console.log(
+    `Porownanie bukmacherow: ${withMultipleBookmakers}/${withOdds} meczow ma co najmniej 2 oferty, lacznie ${totalBookmakerOffers} ofert`,
+  );
   return enriched;
 }
 

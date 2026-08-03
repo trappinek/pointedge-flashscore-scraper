@@ -19,6 +19,24 @@ describe("parseOddsRows", () => {
 });
 
 describe("parseAllOddsRows", () => {
+  it("parses modern Flashscore bookmaker links without stable row classes", () => {
+    const html = `
+      <main>
+        <div class="obfuscated-row">
+          <a href="/bookmaker/165/?from=detail#"><img alt="STS.pl" /></a>
+          <button>3.00</button><button>1.37</button>
+        </div>
+        <div class="another-row">
+          <a href="/bookmaker/539/?from=detail#" title="Betclic.pl"></a>
+          <button>2.83</button><button>1.42</button>
+        </div>
+      </main>`;
+
+    expect(parseAllOddsRows(html)).toEqual([
+      { bookmaker: "STS", playerA: 3, playerB: 1.37 },
+      { bookmaker: "Betclic", playerA: 2.83, playerB: 1.42 },
+    ]);
+  });
   it("returns every Polish bookmaker offer instead of only the maximum", () => {
     const html = fs.readFileSync(new URL("./fixtures/odds.html", import.meta.url), "utf8");
     expect(parseAllOddsRows(html)).toEqual([

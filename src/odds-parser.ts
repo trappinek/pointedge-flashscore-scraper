@@ -20,6 +20,41 @@ function cleanBookmakerLabel(value: string): string {
 export function parseAllOddsRows(html: string): LiveBookmakerOdds[] {
   const $ = cheerio.load(html);
   const rows: LiveBookmakerOdds[] = [];
+
+  // Aktualny Flashscore (2026) nie nadaje wierszom kursow stabilnych klas.
+  // Stabilnym elementem jest link do operatora. Idziemy od niego w gore do
+  // pierwszego kontenera zawierajacego dokladnie dwie wartosci kursow.
+  $("a[href*='/bookmaker/'][href*='from=detail']").each((_, link) => {
+    let container = $(link);
+    let values: number[] = [];
+    for (let depth = 0; depth < 7 && container.length; depth++) {
+      values = container
+        .find("button, [data-testid='wcl-oddsValue']")
+        .map((__, node) => normalizeText($(node).text()))
+        .get()
+        .flatMap((text) => text.match(/^\d{1,2}[.,]\d{2}$/) ?? [])
+        .map((value) => Number(value.replace(",", ".")))
+        .filter((value) => value >= 1.01 && value <= 100);
+      if (values.length === 2) break;
+      container = container.parent();
+    }
+    if (values.length !== 2) return;
+
+    const href = $(link).attr("href") ?? "";
+    const id = href.match(/\/bookmaker\/(\d+)/)?.[1];
+    const rawLabel = [
+      $(link).attr("title"),
+      $(link).find("img[alt]").first().attr("alt"),
+      normalizeText($(link).text()),
+    ].filter(Boolean).join(" ");
+    const known = id ? bookmakerIds.get(id) : undefined;
+    const aliasName = [...alias].find(([key]) =>
+      new RegExp(`(^|\\s)${key.replace(" ", "\\s+")}(?=\\s|\\.|$)`, "i").test(rawLabel),
+    )?.[1];
+    const bookmaker = cleanBookmakerLabel(known ?? aliasName ?? rawLabel);
+    if (bookmaker) rows.push({ bookmaker, playerA: values[0], playerB: values[1] });
+  });
+
   $("tr, [class*='oddsRow'], [data-testid*='bookmaker'], [data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW']").each((_, el) => {
     const attrId = $(el).attr("data-analytics-bookmaker-id") ??
       $(el).find("[data-analytics-bookmaker-id]").first().attr("data-analytics-bookmaker-id");

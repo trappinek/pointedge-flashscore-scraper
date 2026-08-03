@@ -162,10 +162,10 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
     // Najpierw klikamy widoczny link, a gdy SPA go nie udostępni — używamy
     // stabilnych tras hash dla wersji polskiej i angielskiej.
     const oddsRows = page.locator(
-      "[data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW'], [data-testid*='bookmaker'], [class*='oddsRow']",
+      "main a[href*='/bookmaker/'][href*='from=detail'], [data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW'], [data-testid*='bookmaker'], [class*='oddsRow']",
     );
     const oddsCandidates = page.locator(
-      "a[href*='odds-comparison'], a[href*='zestawienie-kurs'], [role='tab'], [role='button']",
+      "a[href*='/kursy/'], a[href*='odds-comparison'], a[href*='zestawienie-kurs'], [role='tab'], [role='button']",
     ).filter({ hasText: /Kursy|Odds/i });
     for (let index = 0; index < await oddsCandidates.count(); index++) {
       const candidate = oddsCandidates.nth(index);
@@ -176,15 +176,22 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
     }
     await oddsRows.first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
     if (!(await oddsRows.count())) {
-      const baseUrl = match.sourceUrl.split("#")[0].replace(/\/$/, "");
-      for (const route of [
-        "#/zestawienie-kursow/home-away/koniec-meczu",
-        "#/odds-comparison/home-away/full-time",
-      ]) {
-        await page.goto(`${baseUrl}/${route}`, { waitUntil: "domcontentloaded", timeout: 20_000 }).catch(() => undefined);
-        await oddsRows.first().waitFor({ state: "visible", timeout: 6_000 }).catch(() => undefined);
-        if (await oddsRows.count()) break;
-      }
+      // Od 2026 Flashscore uzywa osobnej sciezki `/kursy/`, a nie trasy hash.
+      // Budujemy ja z kanonicznego URL po przekierowaniu starego adresu meczu.
+      const oddsUrl = new URL(page.url());
+      oddsUrl.hash = "";
+      oddsUrl.pathname = `${oddsUrl.pathname
+        .replace(/\/(?:kursy|h2h|drabinka)\/?$/i, "/")
+        .replace(/\/?$/, "/")}kursy/`;
+      await page.goto(oddsUrl.toString(), { waitUntil: "domcontentloaded", timeout: 20_000 }).catch(() => undefined);
+      await oddsRows.first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
+    }
+
+    // Flashscore domyslnie zwija czesc polskich operatorow pod przyciskiem „Wiecej”.
+    const moreBookmakers = page.getByRole("button", { name: /^(Więcej|Wiecej|More)$/i });
+    if (await moreBookmakers.count()) {
+      await moreBookmakers.first().click().catch(() => undefined);
+      await page.waitForTimeout(350);
     }
     const odds = parseAllOddsRows(await page.content());
 

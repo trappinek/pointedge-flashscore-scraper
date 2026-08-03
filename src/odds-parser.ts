@@ -26,10 +26,6 @@ export function parseAllOddsRows(html: string): LiveBookmakerOdds[] {
   // pierwszego kontenera zawierajacego dokladnie dwie wartosci kursow.
   $("[data-analytics-element='ODDS_COMPARISONS_BOOKMAKER_CELL'] a[href*='/bookmaker/'], a[href*='/bookmaker/'][href*='from=odds-comparison'][title*='.pl']").each((_, link) => {
     const href = $(link).attr("href") ?? "";
-    // Przyjmujemy wyłącznie ofertę przygotowaną przez Flashscore dla Polski.
-    // Chroni to przed kursami DraftKings/bet365.us zwracanymi czasem przez
-    // globalny wariant strony lub warstwę cache/CDN.
-    if (!/[?&]gicc=PL(?:&|#|$)/i.test(href) || !/[?&]gisc=PL24(?:&|#|$)/i.test(href)) return;
     let container = $(link);
     let values: number[] = [];
     for (let depth = 0; depth < 7 && container.length; depth++) {
@@ -55,6 +51,13 @@ export function parseAllOddsRows(html: string): LiveBookmakerOdds[] {
     const aliasName = [...alias].find(([key]) =>
       new RegExp(`(^|\\s)${key.replace(" ", "\\s+")}(?=\\s|\\.|$)`, "i").test(rawLabel),
     )?.[1];
+    const isPolishCatalogue = /[?&]gicc=PL(?:&|#|$)/i.test(href) &&
+      /[?&]gisc=PL24(?:&|#|$)/i.test(href);
+    const hasPolishDomain = /\.pl\b/i.test(rawLabel);
+    // GitHub Actions czasem dostaje link bez parametrow geolokalizacji, mimo
+    // ze sama tabela zawiera polskich operatorow. Wtedy ufamy tylko jawnej
+    // liscie polskich marek/ID. Dowolna obca nazwa (np. DraftKings) odpada.
+    if (!isPolishCatalogue && !hasPolishDomain && !known && !aliasName) return;
     const bookmaker = cleanBookmakerLabel(known ?? aliasName ?? rawLabel);
     if (bookmaker) rows.push({ bookmaker, playerA: values[0], playerB: values[1] });
   });

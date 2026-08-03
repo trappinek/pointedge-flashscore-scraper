@@ -1,4 +1,4 @@
-export const BOOKMAKERS = ["STS", "Fortuna", "Betclic", "LV BET", "Superbet"] as const;
+export const BOOKMAKERS = ["STS", "Fortuna", "Betclic", "LV BET", "Superbet", "BETFAN", "betters"] as const;
 export type Bookmaker = (typeof BOOKMAKERS)[number];
 export type Tour = "ATP" | "WTA";
 export type Surface = "hard" | "clay" | "grass";

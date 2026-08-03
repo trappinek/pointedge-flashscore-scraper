@@ -67,4 +67,16 @@ describe("parseAllOddsRows", () => {
     </div>`;
     expect(parseAllOddsRows(html)).toEqual([]);
   });
+
+  it("accepts a known Polish operator when GitHub strips geo parameters", () => {
+    const html = `<div class="ui-table__row">
+      <div data-analytics-element="ODDS_COMPARISONS_BOOKMAKER_CELL">
+        <a href="/bookmaker/165/?from=odds-comparison#" title="STS"></a>
+      </div>
+      <a class="oddsCell__odd">2.42</a><a class="oddsCell__odd">1.55</a>
+    </div>`;
+    expect(parseAllOddsRows(html)).toEqual([
+      { bookmaker: "STS", playerA: 2.42, playerB: 1.55 },
+    ]);
+  });
 });

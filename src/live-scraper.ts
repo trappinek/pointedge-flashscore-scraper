@@ -304,10 +304,10 @@ async function collectAllBookmakerOdds(page: Page): Promise<LiveMatch["odds"]> {
       }
     }
 
-    const oddsCells = page.locator("[data-analytics-element^='ODDS_COMPARISONS_ODD_CELL'], .oddsCell__odd, [data-testid='wcl-oddsValue']");
-    const oddsCellCount = await oddsCells.count();
-    if (oddsCellCount > 0) {
-      await oddsCells.nth(oddsCellCount - 1).scrollIntoViewIfNeeded().catch(() => undefined);
+    const bookmakerLinks = page.locator("main a[href*='/bookmaker/'][href*='odds-comparison']");
+    const linkCount = await bookmakerLinks.count();
+    if (linkCount > 0) {
+      await bookmakerLinks.nth(linkCount - 1).scrollIntoViewIfNeeded().catch(() => undefined);
     }
 
     await page.waitForTimeout(300);

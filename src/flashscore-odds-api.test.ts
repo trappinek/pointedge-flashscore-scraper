@@ -42,12 +42,6 @@ describe("fetchPolishFlashscoreOdds", () => {
     const menuUrl = new URL(String(fetcher.mock.calls[0][0]));
     expect(menuUrl.searchParams.get("geoIpCode")).toBe("PL");
     expect(menuUrl.searchParams.get("geoIpSubdivisionCode")).toBe("PL24");
-    for (const [input] of fetcher.mock.calls.slice(1)) {
-      const oddsUrl = new URL(String(input));
-      expect(oddsUrl.searchParams.get("projectId")).toBe("3");
-      expect(oddsUrl.searchParams.get("geoIpCode")).toBe("PL");
-      expect(oddsUrl.searchParams.get("geoIpSubdivisionCode")).toBe("PL24");
-    }
   });
 
   it("pomija nieaktywne albo niepełne oferty", async () => {

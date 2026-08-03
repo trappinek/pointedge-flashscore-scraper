@@ -117,12 +117,6 @@ export async function fetchPolishFlashscoreOdds(
         oddsUrl.searchParams.set("bookmakerId", String(bookmakerId));
         oddsUrl.searchParams.set("betType", "HOME_AWAY");
         oddsUrl.searchParams.set("betScope", "FULL_TIME");
-        // Ten endpoint nie dziedziczy geolokalizacji z zapytania o menu.
-        // Bez tych parametrów globalny backend rozpoznaje adres runnera
-        // GitHub (zwykle USA) i pomija część operatorów dostępnych w Polsce.
-        oddsUrl.searchParams.set("projectId", POLISH_PROJECT_ID);
-        oddsUrl.searchParams.set("geoIpCode", POLISH_GEO_IP_CODE);
-        oddsUrl.searchParams.set("geoIpSubdivisionCode", POLISH_SUBDIVISION_CODE);
         const response = await fetchJson<HomeAwayResponse>(fetcher, oddsUrl);
         const market = response.data?.findPrematchOddsForBookmaker;
         const playerA = numericOdd(market?.home?.value, market?.home?.active);

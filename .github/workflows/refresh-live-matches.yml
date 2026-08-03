@@ -29,8 +29,10 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq tor curl
           TOR_DATA="$RUNNER_TEMP/pointedge-tor"
+          TOR_CONFIG="$RUNNER_TEMP/pointedge-torrc"
           mkdir -p "$TOR_DATA"
-          tor -f /dev/null \
+          : > "$TOR_CONFIG"
+          tor -f "$TOR_CONFIG" \
             --RunAsDaemon 1 \
             --DataDirectory "$TOR_DATA" \
             --SocksPort 19050 \

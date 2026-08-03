@@ -54,12 +54,19 @@ function canonicalBookmakerName(name: string): string {
     ["efortuna.pl", "Fortuna"],
     ["superbet.pl", "Superbet"],
     ["betclic.pl", "Betclic"],
+    ["betfan.pl", "BETFAN"],
+    ["betters.pl", "betters"],
+    ["lvbet.pl", "LV BET"],
+    ["lv bet", "LV BET"],
   ]);
   return known.get(normalized.toLocaleLowerCase("pl")) ?? normalized.replace(/\.pl$/i, "");
 }
 
 function numericOdd(value: string | undefined, active: boolean | undefined): number | null {
-  if (active === false || !value) return null;
+  // `active: false` oznacza ofertę chwilowo niedostępną (przekreśloną),
+  // ale Flashscore nadal publikuje jej ostatnią wartość.
+  void active;
+  if (!value) return null;
   const parsed = Number(value.replace(",", "."));
   return Number.isFinite(parsed) && parsed >= 1.01 && parsed <= 100 ? parsed : null;
 }

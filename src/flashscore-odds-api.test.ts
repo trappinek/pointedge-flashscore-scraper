@@ -68,6 +68,6 @@ describe("fetchPolishFlashscoreOdds", () => {
 
     await expect(
       fetchPolishFlashscoreOdds({ externalId: "flashscore:test123" }, fetcher as typeof fetch),
-    ).resolves.toEqual([]);
+    ).resolves.toEqual([{ bookmaker: "Fortuna", playerA: 1.8, playerB: 2 }]);
   });
 });

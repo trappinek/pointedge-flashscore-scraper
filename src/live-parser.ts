@@ -55,6 +55,18 @@ export interface LiveH2hDetail {
   headToHead: string[];
 }
 
+export function resolveScheduledStartTime(
+  dateStr: string,
+  visibleTime: string,
+  embeddedStartTime: string | null,
+): string {
+  // Po przełożeniu spotkania osadzony timestamp potrafi pozostać stary.
+  // Aktualna godzina widoczna w terminarzu danego dnia ma więc priorytet.
+  return /^\d{2}:\d{2}$/.test(visibleTime)
+    ? warsawDateTimeToIso(dateStr, visibleTime)
+    : embeddedStartTime ?? warsawDateTimeToIso(dateStr, "12:00");
+}
+
 export function combineDrawAndStage(draw: string, stage: string | null): string {
   const exactStage = stage?.trim();
   if (!exactStage || exactStage.toLocaleLowerCase("pl-PL") === draw.toLocaleLowerCase("pl-PL")) {
@@ -327,7 +339,6 @@ export function parseLiveDayHtml(
         const voided = isRefundableVoidReason(voidReason);
         const isFinished = voided || (voidReason !== "postponed" && /Koniec/i.test(statusLabel));
         const status: LiveMatch["status"] = isFinished ? "finished" : isLive ? "live" : "upcoming";
-        const scheduledTime = /^\d{2}:\d{2}$/.test(timeLabel) ? timeLabel : "12:00";
         const result = status === "finished" ? parseResult(element) : null;
         const details = embeddedDetails.get(id);
         const displayedWinner = status === "finished" ? scoreWinner(element) : null;
@@ -354,7 +365,7 @@ export function parseLiveDayHtml(
           tour,
           round,
           surface,
-          startTime: details?.startTime ?? warsawDateTimeToIso(dateStr, scheduledTime),
+          startTime: resolveScheduledStartTime(dateStr, timeLabel, details?.startTime ?? null),
           status,
           result,
           winner: status === "finished" && !voided ? displayedWinner : null,

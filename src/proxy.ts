@@ -120,6 +120,10 @@ async function firstWorkingPolishProxy(candidates: string[]): Promise<string | n
 export async function resolveBrowserProxy(): Promise<BrowserProxy | undefined> {
   const configured = normalizeProxyServer(process.env.PROXY_SERVER || "");
   if (configured) {
+    if (process.env.PROXY_ALREADY_VERIFIED === "1") {
+      console.log(`Uzycie proxy zweryfikowanego przez workflow: ${maskedProxy(configured)}`);
+      return { server: configured };
+    }
     console.log(`Sprawdzanie skonfigurowanego proxy ${maskedProxy(configured)}...`);
     if (await isPolishProxy(configured)) {
       console.log(`Proxy działa i ma polski adres wyjściowy: ${maskedProxy(configured)}`);

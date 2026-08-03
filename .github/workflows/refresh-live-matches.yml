@@ -78,6 +78,7 @@ jobs:
           # Tor jest uzywany tylko przez przegladarke. Upload do PointEdge
           # pozostaje na zwyklym polaczeniu GitHub Actions.
           PROXY_SERVER: "socks5://127.0.0.1:19050"
+          PROXY_ALREADY_VERIFIED: "1"
           LIVE_REQUIRE_UPLOAD: "1"
           POINTEDGE_INGEST_URL: "https://www.pointedge.pl/api/cron/ingest-flashscore"
           CRON_SECRET: ${{ secrets.CRON_SECRET }}

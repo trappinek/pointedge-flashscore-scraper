@@ -61,17 +61,29 @@ async function scrapeRankings(context: BrowserContext): Promise<Map<string, numb
   for (const tour of ["atp", "wta"] as const) {
     const page = await context.newPage();
     try {
-      await page.goto(`https://www.flashscore.pl/tenis/rankingi/${tour}/`, {
-        waitUntil: "domcontentloaded",
-        timeout: 45_000,
-      });
-      await dismissConsent(page);
       const rankingRows = page.locator(".rankingTable__row");
-      const rankingVisible = await rankingRows
-        .first()
-        .waitFor({ state: "visible", timeout: 20_000 })
-        .then(() => true)
-        .catch(() => false);
+      let rankingVisible = false;
+      for (let attempt = 1; attempt <= 3 && !rankingVisible; attempt++) {
+        try {
+          await page.goto(`https://www.flashscore.pl/tenis/rankingi/${tour}/`, {
+            waitUntil: "domcontentloaded",
+            timeout: 45_000,
+          });
+          await dismissConsent(page);
+          rankingVisible = await rankingRows
+            .first()
+            .waitFor({ state: "visible", timeout: 15_000 })
+            .then(() => true)
+            .catch(() => false);
+        } catch (error) {
+          console.warn(
+            `Próba ${attempt}/3 rankingu ${tour.toUpperCase()} nie powiodła się: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        }
+        if (!rankingVisible && attempt < 3) await page.waitForTimeout(1_000 * attempt);
+      }
 
       // Ranking jest informacją pomocniczą. Flashscore potrafi nie wyrenderować
       // tabeli przez wolne wyjście Tor albo chwilową blokadę, ale nie może to
@@ -178,37 +190,6 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
     await page.locator(".participant__image").first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
     const detail = parseLiveMatchDetailHtml(await page.content(), match.playerA, match.playerB);
 
-    // Flashscore zmienia tekst i strukturę zakładki zależnie od domeny/języka.
-    // Najpierw klikamy widoczny link, a gdy SPA go nie udostępni — używamy
-    // stabilnych tras hash dla wersji polskiej i angielskiej.
-    const oddsRows = page.locator(
-      "[data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW'], main a[href*='/bookmaker/'][href*='from=odds-comparison'], [data-testid*='bookmaker'], [class*='oddsRow']",
-    );
-    const oddsCandidates = page.locator(
-      "a[href*='/kursy/'], a[href*='odds-comparison'], a[href*='zestawienie-kurs'], [role='tab'], [role='button']",
-    ).filter({ hasText: /Kursy|Odds/i });
-    for (let index = 0; index < await oddsCandidates.count(); index++) {
-      const candidate = oddsCandidates.nth(index);
-      if (await candidate.isVisible().catch(() => false)) {
-        await candidate.click().catch(() => undefined);
-        break;
-      }
-    }
-    await oddsRows.first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
-    if (!(await oddsRows.count())) {
-      // Od 2026 Flashscore uzywa osobnej sciezki `/kursy/`, a nie trasy hash.
-      // Budujemy ja z kanonicznego URL po przekierowaniu starego adresu meczu.
-      const oddsUrl = new URL(page.url());
-      oddsUrl.hash = "";
-      oddsUrl.pathname = `${oddsUrl.pathname
-        .replace(/\/(?:kursy|h2h|drabinka)\/?$/i, "/")
-        .replace(/\/?$/, "/")}kursy/`;
-      await page.goto(oddsUrl.toString(), { waitUntil: "domcontentloaded", timeout: 20_000 }).catch(() => undefined);
-      await oddsRows.first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
-    }
-
-    const odds = await collectAllBookmakerOdds(page);
-
     const h2hTab = page.getByText("H2H", { exact: true });
     if (await h2hTab.count()) {
       await h2hTab.first().click().catch(() => undefined);
@@ -224,7 +205,6 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
       playerALastMatches: h2h.playerALastMatches,
       playerBLastMatches: h2h.playerBLastMatches,
       headToHead: h2h.headToHead,
-      odds: odds.length ? odds : match.odds,
     };
   } catch (error) {
     console.warn(
@@ -233,6 +213,50 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
       }`,
     );
     return match;
+  } finally {
+    await page.close();
+  }
+}
+
+async function scrapeMatchOdds(context: BrowserContext, match: LiveMatch): Promise<LiveMatch["odds"]> {
+  if (!match.sourceUrl) return match.odds;
+  const page = await context.newPage();
+  try {
+    await page.goto(match.sourceUrl, { waitUntil: "domcontentloaded", timeout: 45_000 });
+    await dismissConsent(page);
+    const oddsRows = page.locator(
+      "[data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW'], main a[href*='/bookmaker/'][href*='from=odds-comparison'], [data-testid*='bookmaker'], [class*='oddsRow']",
+    );
+    const oddsCandidates = page
+      .locator(
+        "a[href*='/kursy/'], a[href*='odds-comparison'], a[href*='zestawienie-kurs'], [role='tab'], [role='button']",
+      )
+      .filter({ hasText: /Kursy|Odds/i });
+    for (let index = 0; index < (await oddsCandidates.count()); index++) {
+      const candidate = oddsCandidates.nth(index);
+      if (await candidate.isVisible().catch(() => false)) {
+        await candidate.click().catch(() => undefined);
+        break;
+      }
+    }
+    await oddsRows.first().waitFor({ state: "visible", timeout: 12_000 }).catch(() => undefined);
+    if (!(await oddsRows.count())) {
+      const oddsUrl = new URL(page.url());
+      oddsUrl.hash = "";
+      oddsUrl.pathname = `${oddsUrl.pathname
+        .replace(/\/(?:kursy|h2h|drabinka)\/?$/i, "/")
+        .replace(/\/?$/, "/")}kursy/`;
+      await page.goto(oddsUrl.toString(), { waitUntil: "domcontentloaded", timeout: 30_000 });
+      await oddsRows.first().waitFor({ state: "visible", timeout: 12_000 }).catch(() => undefined);
+    }
+    return await collectAllBookmakerOdds(page);
+  } catch (error) {
+    console.warn(
+      `Nie udało się pobrać polskich kursów dla ${match.playerA} - ${match.playerB}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return match.odds;
   } finally {
     await page.close();
   }
@@ -284,7 +308,11 @@ async function collectAllBookmakerOdds(page: Page): Promise<LiveMatch["odds"]> {
   return [...collected.values()];
 }
 
-async function enrichDays(context: BrowserContext, days: LiveDaySnapshot[]): Promise<LiveDaySnapshot[]> {
+async function enrichDays(
+  directContext: BrowserContext,
+  oddsContext: BrowserContext,
+  days: LiveDaySnapshot[],
+): Promise<LiveDaySnapshot[]> {
   const queue = days.flatMap((day, dayIndex) =>
     day.matches.map((match, matchIndex) => ({ dayIndex, matchIndex, match })),
   );
@@ -293,7 +321,12 @@ async function enrichDays(context: BrowserContext, days: LiveDaySnapshot[]): Pro
   const workers = Array.from({ length: Math.min(5, queue.length) }, async () => {
     while (cursor < queue.length) {
       const item = queue[cursor++];
-      enriched[item.dayIndex].matches[item.matchIndex] = await enrichMatch(context, item.match);
+      const detailedMatch = await enrichMatch(directContext, item.match);
+      const odds = await scrapeMatchOdds(oddsContext, detailedMatch);
+      enriched[item.dayIndex].matches[item.matchIndex] = {
+        ...detailedMatch,
+        odds: odds.length ? odds : detailedMatch.odds,
+      };
     }
   });
   await Promise.all(workers);
@@ -381,24 +414,30 @@ async function upload(days: LiveDaySnapshot[]): Promise<void> {
 
 export async function main(): Promise<void> {
   const proxy = await resolveBrowserProxy();
-  const browser = await chromium.launch({
+  const directBrowser = await chromium.launch({
+    headless: process.env.HEADLESS !== "0",
+  });
+  const oddsBrowser = await chromium.launch({
     headless: process.env.HEADLESS !== "0",
     proxy,
   });
-  const context = await browser.newContext({ locale: "pl-PL", timezoneId: "Europe/Warsaw" });
+  const directContext = await directBrowser.newContext({ locale: "pl-PL", timezoneId: "Europe/Warsaw" });
+  const oddsContext = await oddsBrowser.newContext({ locale: "pl-PL", timezoneId: "Europe/Warsaw" });
   try {
-    const rankings = await scrapeRankings(context);
+    const rankings = await scrapeRankings(directContext);
     let days: LiveDaySnapshot[] = [];
-    for (const offset of [-1, 0, 1]) days.push(await scrapeDay(context, offset, rankings));
+    for (const offset of [-1, 0, 1]) days.push(await scrapeDay(directContext, offset, rankings));
     if (!days.some((day) => day.matches.length > 0)) {
       throw new Error("Scraper nie znalazł żadnego meczu w całym trzydniowym oknie. Cache nie został zmieniony.");
     }
-    days = await enrichDays(context, days);
+    days = await enrichDays(directContext, oddsContext, days);
     writeJsonAtomic(OUTPUT_FILE, { generatedAt: new Date().toISOString(), days });
     await upload(days);
   } finally {
-    await context.close();
-    await browser.close();
+    await directContext.close();
+    await oddsContext.close();
+    await directBrowser.close();
+    await oddsBrowser.close();
   }
 }
 

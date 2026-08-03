@@ -9,7 +9,7 @@ const PUBLIC_PROXY_SOURCES = [
   "https://proxylist.geonode.com/api/proxy-list?country=PL&limit=500&page=1&sort_by=lastChecked&sort_type=desc&protocols=http%2Chttps",
 ];
 
-const CHECK_URLS = ["https://api.country.is/", "https://ipapi.co/json/"];
+const CHECK_URLS = ["https://api.country.is/", "https://ifconfig.co/json", "https://ipapi.co/json/"];
 
 export function normalizeProxyServer(value: string): string | null {
   const trimmed = value.trim().replace(/\/+$/, "");
@@ -76,7 +76,7 @@ async function isPolishProxy(server: string): Promise<boolean> {
         const response = await client.get(url, { timeout: 7_000, failOnStatusCode: false });
         if (!response.ok()) continue;
         const body = (await response.json()) as Record<string, unknown>;
-        const country = String(body.country ?? body.country_code ?? "").toUpperCase();
+        const country = String(body.country ?? body.country_iso ?? body.country_code ?? "").toUpperCase();
         if (country === "PL") return true;
       } catch {
         // Publiczne proxy często znika z sieci. Sprawdzamy kolejny endpoint.

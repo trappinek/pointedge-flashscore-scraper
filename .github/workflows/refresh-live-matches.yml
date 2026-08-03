@@ -40,15 +40,33 @@ jobs:
             --StrictNodes 1 \
             --Log "notice file $RUNNER_TEMP/pointedge-tor.log"
 
-          for attempt in $(seq 1 45); do
-            country=$(curl --silent --show-error --max-time 10 \
+          echo "Oczekiwanie na pelne uruchomienie sieci Tor..."
+          for attempt in $(seq 1 120); do
+            if grep -q "Bootstrapped 100%" "$RUNNER_TEMP/pointedge-tor.log"; then
+              echo "Tor osiagnal 100% gotowosci. Sprawdzanie kraju wyjscia..."
+              break
+            fi
+            if [ "$attempt" -eq 120 ]; then
+              echo "Tor nie osiagnal gotowosci w wyznaczonym czasie."
+              cat "$RUNNER_TEMP/pointedge-tor.log" || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+          for attempt in $(seq 1 20); do
+            country_json=$(curl --silent --show-error --max-time 15 \
               --socks5-hostname 127.0.0.1:19050 \
               https://api.country.is/ 2>/dev/null || true)
-            if echo "$country" | grep -q '"country":"PL"'; then
+            country_iso=$(curl --silent --show-error --max-time 15 \
+              --socks5-hostname 127.0.0.1:19050 \
+              https://ifconfig.co/country-iso 2>/dev/null | tr -d '\r\n ' || true)
+            if echo "$country_json" | grep -Eq '"country"[[:space:]]*:[[:space:]]*"PL"' \
+              || [ "$country_iso" = "PL" ]; then
               echo "Tor gotowy: potwierdzony polski adres wyjsciowy."
               exit 0
             fi
-            sleep 2
+            sleep 3
           done
 
           echo "Nie udalo sie zestawic polskiego wyjscia Tor. Dane nie zostana nadpisane."

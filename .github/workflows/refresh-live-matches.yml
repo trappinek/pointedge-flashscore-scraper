@@ -30,17 +30,17 @@ jobs:
           sudo apt-get install -y -qq tor curl
           TOR_DATA="$RUNNER_TEMP/pointedge-tor"
           mkdir -p "$TOR_DATA"
-          tor \
+          tor -f /dev/null \
             --RunAsDaemon 1 \
             --DataDirectory "$TOR_DATA" \
-            --SocksPort 9050 \
+            --SocksPort 19050 \
             --ExitNodes '{pl}' \
             --StrictNodes 1 \
             --Log "notice file $RUNNER_TEMP/pointedge-tor.log"
 
           for attempt in $(seq 1 45); do
             country=$(curl --silent --show-error --max-time 10 \
-              --socks5-hostname 127.0.0.1:9050 \
+              --socks5-hostname 127.0.0.1:19050 \
               https://api.country.is/ 2>/dev/null || true)
             if echo "$country" | grep -q '"country":"PL"'; then
               echo "Tor gotowy: potwierdzony polski adres wyjsciowy."
@@ -57,7 +57,7 @@ jobs:
           HEADLESS: "1"
           # Tor jest uzywany tylko przez przegladarke. Upload do PointEdge
           # pozostaje na zwyklym polaczeniu GitHub Actions.
-          PROXY_SERVER: "socks5://127.0.0.1:9050"
+          PROXY_SERVER: "socks5://127.0.0.1:19050"
           LIVE_REQUIRE_UPLOAD: "1"
           POINTEDGE_INGEST_URL: "https://www.pointedge.pl/api/cron/ingest-flashscore"
           CRON_SECRET: ${{ secrets.CRON_SECRET }}

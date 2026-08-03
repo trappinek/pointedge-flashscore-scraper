@@ -66,7 +66,20 @@ async function scrapeRankings(context: BrowserContext): Promise<Map<string, numb
         timeout: 45_000,
       });
       await dismissConsent(page);
-      await page.locator(".rankingTable__row").first().waitFor({ state: "visible", timeout: 20_000 });
+      const rankingRows = page.locator(".rankingTable__row");
+      const rankingVisible = await rankingRows
+        .first()
+        .waitFor({ state: "visible", timeout: 20_000 })
+        .then(() => true)
+        .catch(() => false);
+
+      // Ranking jest informacją pomocniczą. Flashscore potrafi nie wyrenderować
+      // tabeli przez wolne wyjście Tor albo chwilową blokadę, ale nie może to
+      // zatrzymywać pobierania meczów, wyników i kursów.
+      if (!rankingVisible) {
+        console.warn(`Ranking ${tour.toUpperCase()} niedostępny w tym przebiegu — kontynuuję bez niego.`);
+        continue;
+      }
 
       for (let attempt = 0; attempt < 5; attempt++) {
         const more = page.getByRole("button", { name: "Więcej", exact: true });
@@ -85,6 +98,12 @@ async function scrapeRankings(context: BrowserContext): Promise<Map<string, numb
       for (const [playerId, rank] of parseRankingHtml(await page.content())) {
         rankings.set(playerId, rank);
       }
+    } catch (error) {
+      console.warn(
+        `Nie udało się pobrać rankingu ${tour.toUpperCase()}: ${
+          error instanceof Error ? error.message : String(error)
+        }. Kontynuuję bez tego rankingu.`,
+      );
     } finally {
       await page.close();
     }

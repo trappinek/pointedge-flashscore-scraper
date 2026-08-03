@@ -79,4 +79,22 @@ describe("parseAllOddsRows", () => {
       { bookmaker: "STS", playerA: 2.42, playerB: 1.55 },
     ]);
   });
+
+  it("parses unavailable crossed offers for all seven Polish operators", () => {
+    const html = `<main>
+      ${[
+        ["STS", "2.00", "1.75"], ["Fortuna", "2.01", "1.77"],
+        ["Superbet", "2.02", "1.78"], ["Betclic", "2.03", "1.73"],
+        ["BETFAN", "1.98", "1.77"], ["betters", "2.00", "1.71"],
+        ["LV BET", "2.07", "1.77"],
+      ].map(([name, home, away]) => `<div class="ui-table__row" data-analytics-element="ODDS_COMPARISONS_INTERACTIVE_ROW">
+        <div data-analytics-element="ODDS_COMPARISONS_BOOKMAKER_CELL"><a href="/bookmaker/999/?from=odds-comparison" title="${name}"><img alt="${name}" /></a></div>
+        <span data-analytics-element="ODDS_COMPARISONS_ODD_CELL_2" aria-disabled="true"><s>${home}</s></span>
+        <span data-analytics-element="ODDS_COMPARISONS_ODD_CELL_2" aria-disabled="true"><s>${away}</s></span>
+      </div>`).join("")}
+    </main>`;
+    expect(parseAllOddsRows(html).map((offer) => offer.bookmaker)).toEqual([
+      "STS", "Fortuna", "Superbet", "Betclic", "BETFAN", "betters", "LV BET",
+    ]);
+  });
 });

@@ -11,6 +11,7 @@ import {
 import type { LiveDaySnapshot, LiveMatch } from "./live-types.js";
 import { parseAllOddsRows } from "./odds-parser.js";
 import { fetchPolishFlashscoreOdds } from "./flashscore-odds-api.js";
+import { mergeBookmakerOdds } from "./odds-merge.js";
 import { ROOT, isMain, writeJsonAtomic } from "./utils.js";
 
 const FLASHSCORE_URL = "https://www.flashscore.pl/tenis/";
@@ -220,9 +221,9 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
 
 async function scrapeMatchOdds(context: BrowserContext, match: LiveMatch): Promise<LiveMatch["odds"]> {
   if (!match.sourceUrl) return match.odds;
+  let apiOdds: LiveMatch["odds"] = [];
   try {
-    const apiOdds = await fetchPolishFlashscoreOdds(match);
-    if (apiOdds.length) return apiOdds;
+    apiOdds = await fetchPolishFlashscoreOdds(match);
   } catch (error) {
     console.warn(
       `API polskich kursów niedostępne dla ${match.playerA} - ${match.playerB}; używam fallbacku DOM: ${
@@ -260,14 +261,15 @@ async function scrapeMatchOdds(context: BrowserContext, match: LiveMatch): Promi
       await page.goto(oddsUrl.toString(), { waitUntil: "domcontentloaded", timeout: 30_000 });
       await oddsRows.first().waitFor({ state: "visible", timeout: 12_000 }).catch(() => undefined);
     }
-    return await collectAllBookmakerOdds(page);
+    const tableOdds = await collectAllBookmakerOdds(page);
+    return mergeBookmakerOdds(apiOdds, tableOdds);
   } catch (error) {
     console.warn(
       `Nie udało się pobrać polskich kursów dla ${match.playerA} - ${match.playerB}: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );
-    return match.odds;
+    return apiOdds.length ? apiOdds : match.odds;
   } finally {
     await page.close();
   }

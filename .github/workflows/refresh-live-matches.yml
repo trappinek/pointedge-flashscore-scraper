@@ -23,66 +23,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - name: Uruchom Tor i pobierz dane przez polskie wyjscie
-        shell: bash
+      - name: Pobierz mecze i polskie kursy Flashscore
         env:
           HEADLESS: "1"
-          PROXY_SERVER: "socks5://127.0.0.1:19050"
-          PROXY_ALREADY_VERIFIED: "1"
           LIVE_REQUIRE_UPLOAD: "1"
           POINTEDGE_INGEST_URL: "https://www.pointedge.pl/api/cron/ingest-flashscore"
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq tor curl
-          TOR_DATA="$RUNNER_TEMP/pointedge-tor"
-          TOR_CONFIG="$RUNNER_TEMP/pointedge-torrc"
-          mkdir -p "$TOR_DATA"
-          : > "$TOR_CONFIG"
-          tor -f "$TOR_CONFIG" \
-            --RunAsDaemon 1 \
-            --DataDirectory "$TOR_DATA" \
-            --SocksPort 19050 \
-            --ExitNodes '{pl}' \
-            --StrictNodes 1 \
-            --Log "notice file $RUNNER_TEMP/pointedge-tor.log"
-
-          echo "Oczekiwanie na pelne uruchomienie sieci Tor..."
-          for attempt in $(seq 1 120); do
-            if grep -q "Bootstrapped 100%" "$RUNNER_TEMP/pointedge-tor.log"; then
-              echo "Tor osiagnal 100% gotowosci. Sprawdzanie kraju wyjscia..."
-              break
-            fi
-            if [ "$attempt" -eq 120 ]; then
-              echo "Tor nie osiagnal gotowosci w wyznaczonym czasie."
-              cat "$RUNNER_TEMP/pointedge-tor.log" || true
-              exit 1
-            fi
-            sleep 2
-          done
-
-          for attempt in $(seq 1 20); do
-            country_json=$(curl --silent --show-error --max-time 15 \
-              --socks5-hostname 127.0.0.1:19050 \
-              https://api.country.is/ 2>/dev/null || true)
-            country_iso=$(curl --silent --show-error --max-time 15 \
-              --socks5-hostname 127.0.0.1:19050 \
-              https://ifconfig.co/country-iso 2>/dev/null | tr -d '\r\n ' || true)
-            if echo "$country_json" | grep -Eq '"country"[[:space:]]*:[[:space:]]*"PL"' \
-              || [ "$country_iso" = "PL" ]; then
-              echo "Tor gotowy: potwierdzony polski adres wyjsciowy."
-              proxy_verified=1
-              break
-            fi
-            sleep 3
-          done
-
-          if [ "${proxy_verified:-0}" != "1" ]; then
-            echo "Nie udalo sie zestawic polskiego wyjscia Tor. Dane nie zostana nadpisane."
-            cat "$RUNNER_TEMP/pointedge-tor.log" || true
-            exit 1
-          fi
-
-          # Scraper musi dzialac w tym samym kroku. GitHub Actions usuwa
-          # procesy dzialajace w tle po zakonczeniu kazdego kroku.
-          npm run scrape:live
+        run: npm run scrape:live

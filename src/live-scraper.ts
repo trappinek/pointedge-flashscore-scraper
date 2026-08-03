@@ -10,8 +10,8 @@ import {
 } from "./live-parser.js";
 import type { LiveDaySnapshot, LiveMatch } from "./live-types.js";
 import { parseAllOddsRows } from "./odds-parser.js";
+import { fetchPolishFlashscoreOdds } from "./flashscore-odds-api.js";
 import { ROOT, isMain, writeJsonAtomic } from "./utils.js";
-import { resolveBrowserProxy } from "./proxy.js";
 
 const FLASHSCORE_URL = "https://www.flashscore.pl/tenis/";
 const OUTPUT_FILE = path.join(ROOT, "data", "flashscore-live-cache.json");
@@ -220,6 +220,17 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
 
 async function scrapeMatchOdds(context: BrowserContext, match: LiveMatch): Promise<LiveMatch["odds"]> {
   if (!match.sourceUrl) return match.odds;
+  try {
+    const apiOdds = await fetchPolishFlashscoreOdds(match);
+    if (apiOdds.length) return apiOdds;
+  } catch (error) {
+    console.warn(
+      `API polskich kursów niedostępne dla ${match.playerA} - ${match.playerB}; używam fallbacku DOM: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+
   const page = await context.newPage();
   try {
     await page.goto(match.sourceUrl, { waitUntil: "domcontentloaded", timeout: 45_000 });
@@ -413,16 +424,10 @@ async function upload(days: LiveDaySnapshot[]): Promise<void> {
 }
 
 export async function main(): Promise<void> {
-  const proxy = await resolveBrowserProxy();
   const directBrowser = await chromium.launch({
     headless: process.env.HEADLESS !== "0",
   });
-  const oddsBrowser = await chromium.launch({
-    headless: process.env.HEADLESS !== "0",
-    proxy,
-  });
   const directContext = await directBrowser.newContext({ locale: "pl-PL", timezoneId: "Europe/Warsaw" });
-  const oddsContext = await oddsBrowser.newContext({ locale: "pl-PL", timezoneId: "Europe/Warsaw" });
   try {
     const rankings = await scrapeRankings(directContext);
     let days: LiveDaySnapshot[] = [];
@@ -430,14 +435,12 @@ export async function main(): Promise<void> {
     if (!days.some((day) => day.matches.length > 0)) {
       throw new Error("Scraper nie znalazł żadnego meczu w całym trzydniowym oknie. Cache nie został zmieniony.");
     }
-    days = await enrichDays(directContext, oddsContext, days);
+    days = await enrichDays(directContext, directContext, days);
     writeJsonAtomic(OUTPUT_FILE, { generatedAt: new Date().toISOString(), days });
     await upload(days);
   } finally {
     await directContext.close();
-    await oddsContext.close();
     await directBrowser.close();
-    await oddsBrowser.close();
   }
 }
 

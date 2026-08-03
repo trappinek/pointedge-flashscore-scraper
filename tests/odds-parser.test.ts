@@ -24,14 +24,14 @@ describe("parseAllOddsRows", () => {
       <main>
         <div class="ui-table__row">
           <div data-analytics-element="ODDS_COMPARISONS_BOOKMAKER_CELL">
-            <a href="/bookmaker/165/?from=odds-comparison#" title="STS.pl"><img alt="STS.pl" /></a>
+            <a href="/bookmaker/165/?from=odds-comparison&amp;gicc=PL&amp;gisc=PL24#" title="STS.pl"><img alt="STS.pl" /></a>
           </div>
           <a class="oddsCell__odd" data-analytics-element="ODDS_COMPARISONS_ODD_CELL_2">3.00</a>
           <a class="oddsCell__odd" data-analytics-element="ODDS_COMPARISONS_ODD_CELL_2">1.37</a>
         </div>
         <div class="ui-table__row">
           <div data-analytics-element="ODDS_COMPARISONS_BOOKMAKER_CELL">
-            <a href="/bookmaker/539/?from=odds-comparison#" title="Betclic.pl"></a>
+            <a href="/bookmaker/539/?from=odds-comparison&amp;gicc=PL&amp;gisc=PL24#" title="Betclic.pl"></a>
           </div>
           <a class="oddsCell__odd">2.83</a><a class="oddsCell__odd">1.42</a>
         </div>
@@ -56,5 +56,15 @@ describe("parseAllOddsRows", () => {
     expect(parseAllOddsRows(html)).toEqual([
       { bookmaker: "NowyBuk", playerA: 1.91, playerB: 2.02 },
     ]);
+  });
+
+  it("rejects offers from a non-Polish Flashscore catalogue", () => {
+    const html = `<div class="ui-table__row" data-analytics-element="ODDS_COMPARISONS_INTERACTIVE_ROW">
+      <div data-analytics-element="ODDS_COMPARISONS_BOOKMAKER_CELL">
+        <a href="/bookmaker/999/?from=odds-comparison&amp;gicc=US&amp;gisc=US#" title="DraftKings"></a>
+      </div>
+      <a class="oddsCell__odd">1.91</a><a class="oddsCell__odd">2.02</a>
+    </div>`;
+    expect(parseAllOddsRows(html)).toEqual([]);
   });
 });

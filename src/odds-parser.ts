@@ -25,6 +25,11 @@ export function parseAllOddsRows(html: string): LiveBookmakerOdds[] {
   // Stabilnym elementem jest link do operatora. Idziemy od niego w gore do
   // pierwszego kontenera zawierajacego dokladnie dwie wartosci kursow.
   $("[data-analytics-element='ODDS_COMPARISONS_BOOKMAKER_CELL'] a[href*='/bookmaker/'], a[href*='/bookmaker/'][href*='from=odds-comparison'][title*='.pl']").each((_, link) => {
+    const href = $(link).attr("href") ?? "";
+    // Przyjmujemy wyłącznie ofertę przygotowaną przez Flashscore dla Polski.
+    // Chroni to przed kursami DraftKings/bet365.us zwracanymi czasem przez
+    // globalny wariant strony lub warstwę cache/CDN.
+    if (!/[?&]gicc=PL(?:&|#|$)/i.test(href) || !/[?&]gisc=PL24(?:&|#|$)/i.test(href)) return;
     let container = $(link);
     let values: number[] = [];
     for (let depth = 0; depth < 7 && container.length; depth++) {
@@ -40,7 +45,6 @@ export function parseAllOddsRows(html: string): LiveBookmakerOdds[] {
     }
     if (values.length !== 2) return;
 
-    const href = $(link).attr("href") ?? "";
     const id = href.match(/\/bookmaker\/(\d+)/)?.[1];
     const rawLabel = [
       $(link).attr("title"),
@@ -77,9 +81,7 @@ export function parseAllOddsRows(html: string): LiveBookmakerOdds[] {
     // Tabela pochodzi z polskiej wersji Flashscore i jest już filtrowana do
     // dostępnych lokalnie operatorów. Fallback po title/alt sprawia, że nowy
     // bukmacher pojawi się bez aktualizacji listy identyfikatorów w kodzie.
-    const visibleLabel = $(el).find("a[title]").first().attr("title") ??
-      $(el).find("img[alt]").first().attr("alt");
-    const bookmaker = cleanBookmakerLabel(known ?? aliasName ?? polishLabel ?? visibleLabel ?? "");
+    const bookmaker = cleanBookmakerLabel(known ?? aliasName ?? polishLabel ?? "");
     if (!bookmaker) return;
     const oddsText = $(el).find("[data-analytics-element^='ODDS_COMPARISONS_ODD_CELL'], .oddsCell__odd, [data-testid='wcl-oddsValue']").map((__, x) => normalizeText($(x).text())).get().join(" ") || rowText;
     const nums = oddsText.match(/(?<![\d.])\d{1,2}[.,]\d{2}(?!\d)/g)?.map((x) => Number(x.replace(",", "."))) ?? [];

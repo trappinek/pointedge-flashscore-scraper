@@ -23,13 +23,41 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Uruchom Tor z polskim wezlem wyjsciowym
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq tor curl
+          TOR_DATA="$RUNNER_TEMP/pointedge-tor"
+          mkdir -p "$TOR_DATA"
+          tor \
+            --RunAsDaemon 1 \
+            --DataDirectory "$TOR_DATA" \
+            --SocksPort 9050 \
+            --ExitNodes '{pl}' \
+            --StrictNodes 1 \
+            --Log "notice file $RUNNER_TEMP/pointedge-tor.log"
+
+          for attempt in $(seq 1 45); do
+            country=$(curl --silent --show-error --max-time 10 \
+              --socks5-hostname 127.0.0.1:9050 \
+              https://api.country.is/ 2>/dev/null || true)
+            if echo "$country" | grep -q '"country":"PL"'; then
+              echo "Tor gotowy: potwierdzony polski adres wyjsciowy."
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "Nie udalo sie zestawic polskiego wyjscia Tor. Dane nie zostana nadpisane."
+          cat "$RUNNER_TEMP/pointedge-tor.log" || true
+          exit 1
       - run: npm run scrape:live
         env:
           HEADLESS: "1"
-          # Testowo: wybierz działające darmowe proxy i wymagaj polskiego IP.
-          # Jeśli żadne proxy nie działa, scraper kończy się błędem bez nadpisania danych.
-          PROXY_MODE: "public-pl"
-          PUBLIC_PROXY_LIMIT: "48"
+          # Tor jest uzywany tylko przez przegladarke. Upload do PointEdge
+          # pozostaje na zwyklym polaczeniu GitHub Actions.
+          PROXY_SERVER: "socks5://127.0.0.1:9050"
           LIVE_REQUIRE_UPLOAD: "1"
           POINTEDGE_INGEST_URL: "https://www.pointedge.pl/api/cron/ingest-flashscore"
           CRON_SECRET: ${{ secrets.CRON_SECRET }}

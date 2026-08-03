@@ -162,7 +162,7 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
     // Najpierw klikamy widoczny link, a gdy SPA go nie udostępni — używamy
     // stabilnych tras hash dla wersji polskiej i angielskiej.
     const oddsRows = page.locator(
-      "main a[href*='/bookmaker/'][href*='from=detail'], [data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW'], [data-testid*='bookmaker'], [class*='oddsRow']",
+      "[data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW'], main a[href*='/bookmaker/'][href*='from=odds-comparison'], [data-testid*='bookmaker'], [class*='oddsRow']",
     );
     const oddsCandidates = page.locator(
       "a[href*='/kursy/'], a[href*='odds-comparison'], a[href*='zestawienie-kurs'], [role='tab'], [role='button']",

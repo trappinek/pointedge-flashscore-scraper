@@ -24,12 +24,12 @@ export function parseAllOddsRows(html: string): LiveBookmakerOdds[] {
   // Aktualny Flashscore (2026) nie nadaje wierszom kursow stabilnych klas.
   // Stabilnym elementem jest link do operatora. Idziemy od niego w gore do
   // pierwszego kontenera zawierajacego dokladnie dwie wartosci kursow.
-  $("a[href*='/bookmaker/'][href*='from=detail']").each((_, link) => {
+  $("[data-analytics-element='ODDS_COMPARISONS_BOOKMAKER_CELL'] a[href*='/bookmaker/'], a[href*='/bookmaker/'][href*='from=odds-comparison'][title*='.pl']").each((_, link) => {
     let container = $(link);
     let values: number[] = [];
     for (let depth = 0; depth < 7 && container.length; depth++) {
       values = container
-        .find("button, [data-testid='wcl-oddsValue']")
+        .find("[data-analytics-element^='ODDS_COMPARISONS_ODD_CELL'], .oddsCell__odd, button, [data-testid='wcl-oddsValue']")
         .map((__, node) => normalizeText($(node).text()))
         .get()
         .flatMap((text) => text.match(/^\d{1,2}[.,]\d{2}$/) ?? [])
@@ -55,7 +55,7 @@ export function parseAllOddsRows(html: string): LiveBookmakerOdds[] {
     if (bookmaker) rows.push({ bookmaker, playerA: values[0], playerB: values[1] });
   });
 
-  $("tr, [class*='oddsRow'], [data-testid*='bookmaker'], [data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW']").each((_, el) => {
+  $("tr, .ui-table__row, [class*='oddsRow'], [data-testid*='bookmaker'], [data-analytics-element='ODDS_COMPARISONS_INTERACTIVE_ROW']").each((_, el) => {
     const attrId = $(el).attr("data-analytics-bookmaker-id") ??
       $(el).find("[data-analytics-bookmaker-id]").first().attr("data-analytics-bookmaker-id");
     const rawLabel = $(el).find("a[title], img[alt]").map((__, x) =>
@@ -81,7 +81,7 @@ export function parseAllOddsRows(html: string): LiveBookmakerOdds[] {
       $(el).find("img[alt]").first().attr("alt");
     const bookmaker = cleanBookmakerLabel(known ?? aliasName ?? polishLabel ?? visibleLabel ?? "");
     if (!bookmaker) return;
-    const oddsText = $(el).find("[data-testid='wcl-oddsValue']").map((__, x) => normalizeText($(x).text())).get().join(" ") || rowText;
+    const oddsText = $(el).find("[data-analytics-element^='ODDS_COMPARISONS_ODD_CELL'], .oddsCell__odd, [data-testid='wcl-oddsValue']").map((__, x) => normalizeText($(x).text())).get().join(" ") || rowText;
     const nums = oddsText.match(/(?<![\d.])\d{1,2}[.,]\d{2}(?!\d)/g)?.map((x) => Number(x.replace(",", "."))) ?? [];
     const plausible = nums.filter((n) => n >= 1.01 && n <= 100);
     if (plausible.length === 2) rows.push({ bookmaker, playerA: plausible[0], playerB: plausible[1] });

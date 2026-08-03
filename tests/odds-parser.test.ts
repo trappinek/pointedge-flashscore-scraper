@@ -22,13 +22,18 @@ describe("parseAllOddsRows", () => {
   it("parses modern Flashscore bookmaker links without stable row classes", () => {
     const html = `
       <main>
-        <div class="obfuscated-row">
-          <a href="/bookmaker/165/?from=detail#"><img alt="STS.pl" /></a>
-          <button>3.00</button><button>1.37</button>
+        <div class="ui-table__row">
+          <div data-analytics-element="ODDS_COMPARISONS_BOOKMAKER_CELL">
+            <a href="/bookmaker/165/?from=odds-comparison#" title="STS.pl"><img alt="STS.pl" /></a>
+          </div>
+          <a class="oddsCell__odd" data-analytics-element="ODDS_COMPARISONS_ODD_CELL_2">3.00</a>
+          <a class="oddsCell__odd" data-analytics-element="ODDS_COMPARISONS_ODD_CELL_2">1.37</a>
         </div>
-        <div class="another-row">
-          <a href="/bookmaker/539/?from=detail#" title="Betclic.pl"></a>
-          <button>2.83</button><button>1.42</button>
+        <div class="ui-table__row">
+          <div data-analytics-element="ODDS_COMPARISONS_BOOKMAKER_CELL">
+            <a href="/bookmaker/539/?from=odds-comparison#" title="Betclic.pl"></a>
+          </div>
+          <a class="oddsCell__odd">2.83</a><a class="oddsCell__odd">1.42</a>
         </div>
       </main>`;
 

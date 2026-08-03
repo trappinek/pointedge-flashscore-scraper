@@ -23,8 +23,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - name: Uruchom Tor z polskim wezlem wyjsciowym
+      - name: Uruchom Tor i pobierz dane przez polskie wyjscie
         shell: bash
+        env:
+          HEADLESS: "1"
+          PROXY_SERVER: "socks5://127.0.0.1:19050"
+          PROXY_ALREADY_VERIFIED: "1"
+          LIVE_REQUIRE_UPLOAD: "1"
+          POINTEDGE_INGEST_URL: "https://www.pointedge.pl/api/cron/ingest-flashscore"
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq tor curl
@@ -64,21 +71,18 @@ jobs:
             if echo "$country_json" | grep -Eq '"country"[[:space:]]*:[[:space:]]*"PL"' \
               || [ "$country_iso" = "PL" ]; then
               echo "Tor gotowy: potwierdzony polski adres wyjsciowy."
-              exit 0
+              proxy_verified=1
+              break
             fi
             sleep 3
           done
 
-          echo "Nie udalo sie zestawic polskiego wyjscia Tor. Dane nie zostana nadpisane."
-          cat "$RUNNER_TEMP/pointedge-tor.log" || true
-          exit 1
-      - run: npm run scrape:live
-        env:
-          HEADLESS: "1"
-          # Tor jest uzywany tylko przez przegladarke. Upload do PointEdge
-          # pozostaje na zwyklym polaczeniu GitHub Actions.
-          PROXY_SERVER: "socks5://127.0.0.1:19050"
-          PROXY_ALREADY_VERIFIED: "1"
-          LIVE_REQUIRE_UPLOAD: "1"
-          POINTEDGE_INGEST_URL: "https://www.pointedge.pl/api/cron/ingest-flashscore"
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          if [ "${proxy_verified:-0}" != "1" ]; then
+            echo "Nie udalo sie zestawic polskiego wyjscia Tor. Dane nie zostana nadpisane."
+            cat "$RUNNER_TEMP/pointedge-tor.log" || true
+            exit 1
+          fi
+
+          # Scraper musi dzialac w tym samym kroku. GitHub Actions usuwa
+          # procesy dzialajace w tle po zakonczeniu kazdego kroku.
+          npm run scrape:live

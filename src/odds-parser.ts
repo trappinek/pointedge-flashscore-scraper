@@ -8,6 +8,31 @@ const alias = new Map<string, Bookmaker>(BOOKMAKERS.map(b => [normalizeText(b).t
 const bookmakerIds = new Map<string, Bookmaker>([
   ["165", "STS"], ["163", "Fortuna"], ["539", "Betclic"], ["591", "Superbet"]
 ]);
+const oddCellSelector = "[data-analytics-element^='ODDS_COMPARISONS_ODD_CELL'], .oddsCell__odd, [data-testid='wcl-oddsValue']";
+
+function bookmakerFromMarkup(value: string): Bookmaker | undefined {
+  const text = value.toLowerCase();
+  const patterns: Array<[RegExp, Bookmaker]> = [
+    [/(?:^|[^a-z])sts(?:\.pl|[^a-z]|$)/i, "STS"],
+    [/fortuna/i, "Fortuna"],
+    [/superbet/i, "Superbet"],
+    [/betclic/i, "Betclic"],
+    [/betfan/i, "BETFAN"],
+    [/betters/i, "betters"],
+    [/lv[\s_./-]*bet/i, "LV BET"],
+  ];
+  return patterns.find(([pattern]) => pattern.test(text))?.[1];
+}
+
+function oddsInside($: cheerio.CheerioAPI, container: cheerio.Cheerio<any>): number[] {
+  return container.find(oddCellSelector)
+    .filter((_, node) => $(node).find(oddCellSelector).length === 0)
+    .map((_, node) => normalizeText($(node).text()))
+    .get()
+    .flatMap((text) => text.match(/^\d{1,2}[.,]\d{2}$/) ?? [])
+    .map((value) => Number(value.replace(",", ".")))
+    .filter((value) => value >= 1.01 && value <= 100);
+}
 
 function cleanBookmakerLabel(value: string): string {
   return normalizeText(value)
@@ -90,6 +115,24 @@ export function parseAllOddsRows(html: string): LiveBookmakerOdds[] {
     const nums = oddsText.match(/(?<![\d.])\d{1,2}[.,]\d{2}(?!\d)/g)?.map((x) => Number(x.replace(",", "."))) ?? [];
     const plausible = nums.filter((n) => n >= 1.01 && n <= 100);
     if (plausible.length === 2) rows.push({ bookmaker, playerA: plausible[0], playerB: plausible[1] });
+  });
+
+  // Czesc operatorow (m.in. BETFAN, betters i LV BET) ma w tabeli kurs,
+  // ale nieaktywny link afiliacyjny. Ich wiersze nie maja stabilnej klasy ani
+  // linku /bookmaker/, dlatego wychodzimy od komorek kursow i odnajdujemy
+  // najblizszego wspolnego rodzica zawierajacego dokladnie dwa kursy.
+  $(oddCellSelector).filter((_, node) => $(node).find(oddCellSelector).length === 0).each((_, cell) => {
+    let container = $(cell).parent();
+    for (let depth = 0; depth < 8 && container.length; depth++, container = container.parent()) {
+      const values = oddsInside($, container);
+      if (values.length > 2) break;
+      if (values.length !== 2) continue;
+      const markup = $.html(container);
+      const bookmaker = bookmakerFromMarkup(markup);
+      if (!bookmaker) continue;
+      rows.push({ bookmaker, playerA: values[0], playerB: values[1] });
+      break;
+    }
   });
   return [...new Map(rows.map((row) => [row.bookmaker.toLocaleLowerCase("pl"), row])).values()];
 }

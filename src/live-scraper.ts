@@ -41,8 +41,10 @@ async function selectOffset(page: Page, offset: number): Promise<void> {
   const button = page.getByRole("button", { name: label });
   await button.first().waitFor({ state: "visible", timeout: 20_000 }).catch(() => undefined);
   if ((await button.count()) !== 1) throw new Error(`Nie znaleziono nawigacji dnia dla offsetu ${offset}.`);
-  await button.click();
-  await page.waitForTimeout(900);
+  for (let click = 0; click < Math.abs(offset); click++) {
+    await button.click();
+    await page.waitForTimeout(900);
+  }
 }
 
 async function assertSelectedDate(page: Page, expected: string): Promise<void> {
@@ -433,9 +435,9 @@ export async function main(): Promise<void> {
   try {
     const rankings = await scrapeRankings(directContext);
     let days: LiveDaySnapshot[] = [];
-    for (const offset of [-1, 0, 1]) days.push(await scrapeDay(directContext, offset, rankings));
+    for (const offset of [-1, 0, 1, 2]) days.push(await scrapeDay(directContext, offset, rankings));
     if (!days.some((day) => day.matches.length > 0)) {
-      throw new Error("Scraper nie znalazł żadnego meczu w całym trzydniowym oknie. Cache nie został zmieniony.");
+      throw new Error("Scraper nie znalazł żadnego meczu w całym czterodniowym oknie. Cache nie został zmieniony.");
     }
     days = await enrichDays(directContext, directContext, days);
     writeJsonAtomic(OUTPUT_FILE, { generatedAt: new Date().toISOString(), days });

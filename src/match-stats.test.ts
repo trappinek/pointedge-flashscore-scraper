@@ -27,4 +27,9 @@ describe("parseMatchStatsHtml", () => {
   it("returns an empty array for an empty statistics tab", () => {
     expect(parseMatchStatsHtml("<div>Brak statystyk</div>")).toEqual([]);
   });
+
+  it("removes player values accidentally included around a visible label", () => {
+    const html = `<div class="wcl-row_test"><div class="homeValue_a">62%</div><div class="category_wrapper"><span>62%</span><span class="category_label">Pierwszy serwis</span><span>64%</span></div><div class="awayValue_b">64%</div></div>`;
+    expect(parseMatchStatsHtml(html)[0]).toMatchObject({ label: "Pierwszy serwis", playerAValue: "62%", playerBValue: "64%" });
+  });
 });

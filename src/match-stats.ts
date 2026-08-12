@@ -29,6 +29,14 @@ function compact(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function stripEdgeValue(label: string, value: string | null, edge: "start" | "end"): string {
+  if (!value) return label;
+  const compactValue = compact(value);
+  if (edge === "start" && label.startsWith(compactValue)) return label.slice(compactValue.length).trim();
+  if (edge === "end" && label.endsWith(compactValue)) return label.slice(0, -compactValue.length).trim();
+  return label;
+}
+
 function slug(value: string): string {
   return value.normalize("NFKD").replace(/\p{Diacritic}/gu, "").toLowerCase()
     .replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 80) || "stat";
@@ -60,11 +68,17 @@ export function parseMatchStatsHtml(source: string): MatchStat[] {
 
   rows.each((_, row) => {
     const element = $(row);
-    const label = compact(element.find(".stat__category, [class*='statCategory'], [data-testid*='category'], [class*='category']").first().text());
-    if (!label) return;
     const playerAValue = rowValue($, row, "home");
     const playerBValue = rowValue($, row, "away");
     if (playerAValue === null && playerBValue === null) return;
+    const labelCandidates = element.find(".stat__category, [class*='statCategory'], [data-testid*='category'], [class*='category']")
+      .toArray()
+      .map((candidate) => compact($(candidate).text()))
+      .filter(Boolean)
+      .sort((a, b) => a.length - b.length);
+    let label = labelCandidates[0] ?? "";
+    label = stripEdgeValue(stripEdgeValue(label, playerAValue, "start"), playerBValue, "end");
+    if (!label) return;
     stats.push({
       key: statKey(label),
       label,

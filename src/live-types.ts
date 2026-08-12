@@ -24,6 +24,15 @@ export interface LiveMatch {
   voidReason: "retirement" | "walkover" | "cancelled" | "postponed" | "abandoned" | null;
   retiredPlayer: "A" | "B" | null;
   odds: LiveBookmakerOdds[];
+  matchStats: MatchStat[];
+}
+
+export interface MatchStat {
+  key: string;
+  label: string;
+  category: string | null;
+  playerAValue: string | null;
+  playerBValue: string | null;
 }
 
 export interface LiveBookmakerOdds {

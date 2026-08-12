@@ -12,6 +12,7 @@ import type { LiveDaySnapshot, LiveMatch } from "./live-types.js";
 import { parseAllOddsRows } from "./odds-parser.js";
 import { fetchPolishFlashscoreOdds } from "./flashscore-odds-api.js";
 import { mergeBookmakerOdds } from "./odds-merge.js";
+import { parseMatchStatsHtml } from "./match-stats.js";
 import { ROOT, isMain, writeJsonAtomic } from "./utils.js";
 
 const FLASHSCORE_URL = "https://www.flashscore.pl/tenis/";
@@ -192,6 +193,9 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
     await page.locator(".detail__breadcrumbs").waitFor({ state: "visible", timeout: 12_000 });
     await page.locator(".participant__image").first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
     const detail = parseLiveMatchDetailHtml(await page.content(), match.playerA, match.playerB);
+    const matchStats = match.status === "finished"
+      ? await scrapeFinishedMatchStats(page, match)
+      : [];
 
     const h2hTab = page.getByText("H2H", { exact: true });
     if (await h2hTab.count()) {
@@ -208,6 +212,7 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
       playerALastMatches: h2h.playerALastMatches,
       playerBLastMatches: h2h.playerBLastMatches,
       headToHead: h2h.headToHead,
+      matchStats,
     };
   } catch (error) {
     console.warn(
@@ -219,6 +224,36 @@ async function enrichMatch(context: BrowserContext, match: LiveMatch): Promise<L
   } finally {
     await page.close();
   }
+}
+
+async function scrapeFinishedMatchStats(page: Page, match: LiveMatch): Promise<LiveMatch["matchStats"]> {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      if (attempt > 1 && match.sourceUrl) {
+        await page.goto(match.sourceUrl, { waitUntil: "domcontentloaded", timeout: 25_000 });
+        await dismissConsent(page);
+      }
+      const tabs = page.locator("a, button, [role='tab']").filter({ hasText: /^Statystyki$/i });
+      for (let index = 0; index < await tabs.count(); index++) {
+        const tab = tabs.nth(index);
+        if (await tab.isVisible().catch(() => false)) {
+          await tab.click({ timeout: 5_000 });
+          break;
+        }
+      }
+      await page.locator(".stat__row, [class*='statistics__row'], [class*='wcl-row']:has([class*='category']), [data-testid*='statistics-row']")
+        .first().waitFor({ state: "visible", timeout: 8_000 }).catch(() => undefined);
+      const stats = parseMatchStatsHtml(await page.content());
+      if (stats.length) return stats;
+      if (attempt === 2) return [];
+    } catch (error) {
+      console.warn(
+        `Statystyki ${match.externalId}, próba ${attempt}/2: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    if (attempt < 2) await page.waitForTimeout(600 * attempt);
+  }
+  return [];
 }
 
 async function scrapeMatchOdds(context: BrowserContext, match: LiveMatch): Promise<LiveMatch["odds"]> {
@@ -357,11 +392,15 @@ async function enrichDays(
   const oddsMatches = enriched.flatMap((day) => day.matches).filter((match) => match.odds.length > 0);
   const withMultipleBookmakers = oddsMatches.filter((match) => match.odds.length > 1).length;
   const totalBookmakerOffers = oddsMatches.reduce((sum, match) => sum + match.odds.length, 0);
+  const finishedMatches = enriched.flatMap((day) => day.matches).filter((match) => match.status === "finished");
+  const finishedWithStats = finishedMatches.filter((match) => match.matchStats.length > 0).length;
   console.log(`Szczegóły meczów: zdjęcia ${withPhotos}/${queue.length}, dokładna runda ${withSpecificRound}/${queue.length}`);
   console.log(`Kursy bukmacherow: ${withOdds}/${queue.length} meczow`);
   console.log(
     `Porownanie bukmacherow: ${withMultipleBookmakers}/${withOdds} meczow ma co najmniej 2 oferty, lacznie ${totalBookmakerOffers} ofert`,
   );
+  console.log(`Zakończone mecze: ${finishedMatches.length}`);
+  console.log(`Statystyki: znalezione ${finishedWithStats}, niedostępne ${finishedMatches.length - finishedWithStats}`);
   return enriched;
 }
 

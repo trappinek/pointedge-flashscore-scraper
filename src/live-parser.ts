@@ -373,6 +373,7 @@ export function parseLiveDayHtml(
           voidReason,
           retiredPlayer,
           odds: [],
+          matchStats: [],
         });
       });
   });

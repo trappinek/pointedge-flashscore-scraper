@@ -19,6 +19,8 @@ const FLASHSCORE_URL = "https://www.flashscore.pl/tenis/";
 const OUTPUT_FILE = path.join(ROOT, "data", "flashscore-live-cache.json");
 const DEFAULT_INGEST_URL = "https://www.pointedge.pl/api/cron/ingest-flashscore";
 
+class NoTournamentListError extends Error {}
+
 function dateInWarsaw(offset: number): string {
   const instant = new Date(Date.now() + offset * 86_400_000);
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -174,7 +176,7 @@ async function scrapeDay(
       const debugFile = path.join(ROOT, "screenshots", `live-${dateStr}.html`);
       fs.mkdirSync(path.dirname(debugFile), { recursive: true });
       fs.writeFileSync(debugFile, html, "utf8");
-      throw new Error(`Nie znaleziono listy turniejów dla ${dateStr}. Zapisano ${debugFile}.`);
+      throw new NoTournamentListError(`Nie znaleziono listy turniejów dla ${dateStr}. Zapisano ${debugFile}.`);
     }
 
     const matches = parseLiveDayHtml(parserSource, dateStr, rankings);
@@ -474,7 +476,17 @@ export async function main(): Promise<void> {
   try {
     const rankings = await scrapeRankings(directContext);
     let days: LiveDaySnapshot[] = [];
-    for (const offset of [-1, 0, 1, 2]) days.push(await scrapeDay(directContext, offset, rankings));
+    for (const offset of [-1, 0, 1, 2]) {
+      try {
+        days.push(await scrapeDay(directContext, offset, rankings));
+      } catch (error) {
+        if (offset === 2 && error instanceof NoTournamentListError) {
+          console.warn(`${error.message} Pojutrze jest dniem opcjonalnym — pomijam go w snapshocie.`);
+          continue;
+        }
+        throw error;
+      }
+    }
     if (!days.some((day) => day.matches.length > 0)) {
       throw new Error("Scraper nie znalazł żadnego meczu w całym czterodniowym oknie. Cache nie został zmieniony.");
     }
